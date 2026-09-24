@@ -133,7 +133,12 @@ function tick(now) {
     const x = p.startX + (p.endX - p.startX) * progress; const y = p.startY + (p.endY - p.startY) * progress + arc; const scale = 1.08 - .48 * Math.sin(progress * Math.PI) - .08 * progress;
     p.el.style.transform = `translate(${x - 39}px, ${y - 39}px) scale(${scale}) rotate(${progress * 480}deg)`;
     if (progress >= 1 && p.alive) {
-      const landedOn = state.targets.find((t) => t.alive && !t.invulnerable && Math.hypot((t.x + t.size / 2) - p.endX, (t.y + t.size / 2) - p.endY) < t.size / 2 + 24);
+      const landedOn = state.targets.find((t) => {
+        if (!t.alive || t.invulnerable) return false;
+        const padding = 3;
+        return p.endX >= t.x - padding && p.endX <= t.x + t.size + padding
+          && p.endY >= t.y - padding && p.endY <= t.y + t.size + padding;
+      });
       if (landedOn) hitTarget(landedOn, p, now);
       if (p.alive) { p.el.remove(); p.alive = false; if (!state.fever) state.combo = 0; }
     }
