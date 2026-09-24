@@ -58,13 +58,14 @@ h1 span { color: #ffdc55; -webkit-text-stroke: 2px #fff; }
 .target.trap { filter: drop-shadow(0 0 10px #ff445c) drop-shadow(0 7px 0 rgba(0,0,0,.25)); animation: trapPulse .8s infinite alternate; }
 .target.trickster .target-asset { animation: targetWobble .22s steps(2, end) infinite; }
 .target::after { content: ''; position: absolute; inset: 8%; border-radius: 50%; pointer-events: none; }
-.target.pooed::after { background: rgba(100,55,16,.56); mix-blend-mode: multiply; }
+.target.pooed::after { background: rgba(104,57,15,.62); mix-blend-mode: multiply; }
+.target.pooed .target-asset { filter: sepia(1) saturate(2.4) hue-rotate(336deg) brightness(.66); }
 .target.pigged .target-asset { transform: rotate(8deg) scale(1.15); }
 .target.manholed .target-asset { transform: scale(1.12); }
 .target.fleeing { transition: none; filter: brightness(1.25); }
 @keyframes trapPulse { to { filter: drop-shadow(0 0 18px #ff445c) drop-shadow(0 7px 0 rgba(0,0,0,.25)); } }
 @keyframes targetWobble { to { transform: translate(5px,-4px) rotate(12deg) scale(1.05,.92); } }
-.projectile, .loaded-projectile { position: absolute; display: grid; place-items: center; width: 78px; height: 78px; will-change: transform; pointer-events: none; }
+.projectile, .loaded-projectile { position: absolute; display: grid; place-items: center; width: 96px; height: 96px; will-change: transform; pointer-events: none; }
 .projectile img, .loaded-projectile img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 6px 0 rgba(0,0,0,.24)); }
 .impact { position: absolute; width: 18px; height: 18px; border: 5px solid #fff7a8; border-radius: 50%; animation: impact .28s ease-out forwards; }
 @keyframes impact { to { transform: scale(5); opacity: 0; } }
