@@ -13,11 +13,11 @@ const weapons = [
   { name: '리산성', icon: '🧑', hit: 'risan' },
 ];
 const targetTypes = [
-  { key: 'normal', icon: '●', color: '#ff6e6e', size: 74, points: 10, weight: 52 },
+  { key: 'normal', icon: '●', color: '#ff6e6e', size: 74, points: 10, weight: 55 },
   { key: 'small', icon: '★', color: '#54c8ed', size: 48, points: 30, weight: 24 },
   { key: 'big', icon: '◆', color: '#77cf7c', size: 112, points: 5, weight: 15 },
-  { key: 'trap', icon: '!', color: '#3a344b', size: 72, points: -50, weight: 7 },
-  { key: 'trickster', icon: '✦', color: '#b655f0', size: 64, points: 70, weight: 2 },
+  { key: 'trap', icon: '!', color: '#3a344b', size: 72, points: -50, weight: 3 },
+  { key: 'trickster', icon: '✦', color: '#b655f0', size: 64, points: 70, weight: 3 },
 ];
 
 const state = { active: false, paused: false, startedAt: 0, pauseStartedAt: 0, pausedTotal: 0, score: 0, combo: 0, maxCombo: 0, hits: 0, fever: false, feverUntil: 0, lastHitAt: 0, targets: [], projectiles: [], spawnAt: 0, raf: null };
@@ -44,10 +44,23 @@ function resetGame() {
 
 function spawnTarget(now) {
   const type = weightedTarget(); const rect = playfield.getBoundingClientRect(); const edgeRoll = Math.random();
-  let x, y, vx, vy;
+  const entry = edgeRoll < .72 ? (Math.random() < .5 ? 'left' : 'right') : 'top';
+  let x, y, exitX, exitY;
   const speed = (36 + Math.random() * 30 + Math.min(gameTime(now) / 1500, 30)) * (type.key === 'small' ? 1.28 : 1);
-  if (edgeRoll < .72) { const left = Math.random() < .5; x = left ? -type.size : rect.width + type.size; y = 90 + Math.random() * (rect.height - 210); vx = left ? speed : -speed; vy = (Math.random() - .5) * 18; }
-  else { x = 20 + Math.random() * (rect.width - 40); y = -type.size; vx = (Math.random() - .5) * 28; vy = speed; }
+  if (entry === 'left' || entry === 'right') {
+    x = entry === 'left' ? -type.size : rect.width + type.size;
+    y = 90 + Math.random() * Math.max(40, rect.height - 230);
+    exitX = entry === 'left' ? rect.width + type.size : -type.size;
+    const diagonal = (Math.random() < .5 ? -1 : 1) * (rect.height * (.22 + Math.random() * .22));
+    exitY = Math.max(40, Math.min(rect.height - 70, y + diagonal));
+  } else {
+    x = 30 + Math.random() * Math.max(40, rect.width - 60); y = -type.size;
+    exitX = Math.random() < .5 ? -type.size : rect.width + type.size;
+    exitY = 100 + Math.random() * Math.max(40, rect.height - 190);
+  }
+  const distance = Math.hypot(exitX - x, exitY - y) || 1;
+  const vx = ((exitX - x) / distance) * speed;
+  const vy = ((exitY - y) / distance) * speed;
   const el = document.createElement('div'); el.className = `target ${type.key}`; el.textContent = type.icon; el.style.setProperty('--size', `${type.size}px`); el.style.setProperty('--color', type.color); targetLayer.append(el);
   state.targets.push({ id: nextId++, type, el, x, y, vx, vy, size: type.size, alive: true, behaviorAt: now + 430 + Math.random() * 640 });
 }
