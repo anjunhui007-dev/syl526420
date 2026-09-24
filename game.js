@@ -61,8 +61,9 @@ function throwObject(event) {
 }
 
 function hitTarget(target, projectile, now) {
-  if (!target.alive) return; target.alive = false; projectile.alive = false; projectile.el.remove();
+  if (!target.alive || target.invulnerable) return; target.alive = false; projectile.alive = false; projectile.el.remove();
   if (target.type.key === 'trap') {
+    target.alive = true; target.invulnerable = true;
     state.score = Math.max(0, state.score + target.type.points); state.combo = 0;
     target.fleeing = true; target.el.classList.add('fleeing'); target.vx = 1050; target.vy = -840; return;
   }
@@ -98,7 +99,7 @@ function tick(now) {
     if (!p.alive) return false; const progress = Math.min(1, (now - p.startAt) / p.duration); const arc = -Math.sin(progress * Math.PI) * Math.min(170, 75 + Math.abs(p.endX - p.startX) * .16);
     const x = p.startX + (p.endX - p.startX) * progress; const y = p.startY + (p.endY - p.startY) * progress + arc; const scale = 1.08 - .48 * Math.sin(progress * Math.PI) - .08 * progress;
     p.el.style.transform = `translate(${x - 29}px, ${y - 29}px) scale(${scale}) rotate(${progress * 480}deg)`;
-    for (const t of state.targets) { if (t.alive && Math.hypot((t.x + t.size / 2) - x, (t.y + t.size / 2) - y) < t.size / 2 + 19) { hitTarget(t, p, now); break; } }
+    for (const t of state.targets) { if (t.alive && !t.invulnerable && Math.hypot((t.x + t.size / 2) - x, (t.y + t.size / 2) - y) < t.size / 2 + 19) { hitTarget(t, p, now); break; } }
     if (progress >= 1 && p.alive) { p.el.remove(); p.alive = false; if (!state.fever) state.combo = 0; }
     return p.alive;
   });
