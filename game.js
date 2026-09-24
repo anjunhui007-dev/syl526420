@@ -14,11 +14,11 @@ const weapons = [
   { name: '리산성', asset: assets.projectileRisangseong, hit: 'risan' },
 ];
 const targetTypes = [
-  { key: 'normal', size: 90, points: 10, weight: 55 },
-  { key: 'small', size: 60, points: 30, weight: 24 },
-  { key: 'big', size: 128, points: 5, weight: 15 },
-  { key: 'trap', size: 88, points: -50, weight: 3 },
-  { key: 'trickster', size: 76, points: 70, weight: 3 },
+  { key: 'normal', size: 104, points: 10, weight: 48 },
+  { key: 'small', size: 104, points: 30, weight: 22 },
+  { key: 'big', size: 104, points: 5, weight: 15 },
+  { key: 'trap', size: 104, points: -50, weight: 6 },
+  { key: 'trickster', size: 104, points: 70, weight: 9 },
 ];
 const targetAssets = [assets.target1, assets.target2, assets.target3, assets.target4, assets.target7];
 
@@ -131,7 +131,7 @@ function tick(now) {
   state.projectiles = state.projectiles.filter((p) => {
     if (!p.alive) return false; const progress = Math.min(1, (now - p.startAt) / p.duration); const arc = -Math.sin(progress * Math.PI) * Math.min(170, 75 + Math.abs(p.endX - p.startX) * .16);
     const x = p.startX + (p.endX - p.startX) * progress; const y = p.startY + (p.endY - p.startY) * progress + arc; const scale = 1.08 - .48 * Math.sin(progress * Math.PI) - .08 * progress;
-    p.el.style.transform = `translate(${x - 39}px, ${y - 39}px) scale(${scale}) rotate(${progress * 480}deg)`;
+    p.el.style.transform = `translate(${x - 48}px, ${y - 48}px) scale(${scale}) rotate(${progress * 480}deg)`;
     if (progress >= 1 && p.alive) {
       const landedOn = state.targets.find((t) => {
         if (!t.alive || t.invulnerable) return false;
