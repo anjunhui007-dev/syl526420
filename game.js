@@ -47,7 +47,7 @@ function spawnTarget(now) {
   let x, y, vx, vy;
   const speed = (36 + Math.random() * 30 + Math.min(gameTime(now) / 1500, 30)) * (type.key === 'small' ? 1.28 : 1);
   if (edgeRoll < .72) { const left = Math.random() < .5; x = left ? -type.size : rect.width + type.size; y = 90 + Math.random() * (rect.height - 210); vx = left ? speed : -speed; vy = (Math.random() - .5) * 18; }
-  else { const top = Math.random() < .5; x = 20 + Math.random() * (rect.width - 40); y = top ? -type.size : rect.height + type.size; vx = (Math.random() - .5) * 28; vy = top ? speed : -speed; }
+  else { x = 20 + Math.random() * (rect.width - 40); y = -type.size; vx = (Math.random() - .5) * 28; vy = speed; }
   const el = document.createElement('div'); el.className = `target ${type.key}`; el.textContent = type.icon; el.style.setProperty('--size', `${type.size}px`); el.style.setProperty('--color', type.color); targetLayer.append(el);
   state.targets.push({ id: nextId++, type, el, x, y, vx, vy, size: type.size, alive: true, behaviorAt: now + 430 + Math.random() * 640 });
 }
@@ -109,8 +109,11 @@ function tick(now) {
     if (!p.alive) return false; const progress = Math.min(1, (now - p.startAt) / p.duration); const arc = -Math.sin(progress * Math.PI) * Math.min(170, 75 + Math.abs(p.endX - p.startX) * .16);
     const x = p.startX + (p.endX - p.startX) * progress; const y = p.startY + (p.endY - p.startY) * progress + arc; const scale = 1.08 - .48 * Math.sin(progress * Math.PI) - .08 * progress;
     p.el.style.transform = `translate(${x - 29}px, ${y - 29}px) scale(${scale}) rotate(${progress * 480}deg)`;
-    for (const t of state.targets) { if (t.alive && !t.invulnerable && Math.hypot((t.x + t.size / 2) - x, (t.y + t.size / 2) - y) < t.size / 2 + 19) { hitTarget(t, p, now); break; } }
-    if (progress >= 1 && p.alive) { p.el.remove(); p.alive = false; if (!state.fever) state.combo = 0; }
+    if (progress >= 1 && p.alive) {
+      const landedOn = state.targets.find((t) => t.alive && !t.invulnerable && Math.hypot((t.x + t.size / 2) - p.endX, (t.y + t.size / 2) - p.endY) < t.size / 2 + 19);
+      if (landedOn) hitTarget(landedOn, p, now);
+      if (p.alive) { p.el.remove(); p.alive = false; if (!state.fever) state.combo = 0; }
+    }
     return p.alive;
   });
   updateHud(now); state.raf = requestAnimationFrame(tick);
