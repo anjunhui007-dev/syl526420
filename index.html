@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#10152e" />
+    <title>HIT 리산성!</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section id="home-screen" class="screen home-screen active" aria-label="홈 화면">
+        <div class="home-target target-demo one">●</div>
+        <div class="home-target target-demo two">◆</div>
+        <div class="home-target target-demo three">★</div>
+        <div class="home-target target-demo chaos">✦</div>
+        <div class="home-content">
+          <p class="eyebrow">90초 예측 투척 대결</p>
+          <h1><span>HIT</span> 리산성!</h1>
+          <p class="subtitle">움직이는 표적의 앞을 노려라!</p>
+          <div class="home-actions">
+            <button id="start-button" class="primary-button">게임 시작</button>
+            <button id="ranking-button" class="secondary-button">랭킹 확인</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="game-screen" class="screen game-screen" aria-label="게임 화면">
+        <div id="playfield" class="playfield" aria-label="표적을 클릭해서 맞히세요">
+          <div class="top-hud">
+            <button id="pause-button" class="icon-button" aria-label="일시정지">Ⅱ</button>
+            <div class="score-panel">
+              <strong id="score-value">0</strong>
+              <span id="timer-value">01:30</span>
+            </div>
+            <div id="combo-panel" class="combo-panel">COMBO <b id="combo-value">0</b></div>
+          </div>
+          <div id="fever-banner" class="fever-banner" aria-live="polite">FEVER!</div>
+          <div id="target-layer" class="target-layer"></div>
+          <div id="projectile-layer" class="projectile-layer"></div>
+          <div class="throw-origin">✋</div>
+          <div class="weapon-display"><span>이번 투척</span><b id="next-weapon">?</b></div>
+        </div>
+      </section>
+
+      <section id="result-screen" class="screen result-screen" aria-label="게임 결과">
+        <div class="result-card">
+          <p class="eyebrow">TIME UP!</p>
+          <h2>결과</h2>
+          <div class="result-score"><span>최종 점수</span><strong id="final-score">0</strong></div>
+          <div class="result-stats"><span>명중 <b id="hit-count">0</b></span><span>최고 콤보 <b id="max-combo">0</b></span></div>
+          <div class="home-actions">
+            <button id="retry-button" class="primary-button">다시하기</button>
+            <button id="result-ranking-button" class="secondary-button">랭킹</button>
+            <button id="result-home-button" class="text-button">홈으로</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="ranking-screen" class="screen ranking-screen" aria-label="랭킹 화면">
+        <div class="ranking-card">
+          <p class="eyebrow">HIT 리산성!</p>
+          <h2>랭킹</h2>
+          <ol id="ranking-list" class="ranking-list"></ol>
+          <button id="ranking-home-button" class="primary-button">홈으로 돌아가기</button>
+        </div>
+      </section>
+    </main>
+
+    <div id="pause-modal" class="modal" aria-hidden="true">
+      <div class="modal-card">
+        <p class="eyebrow">PAUSED</p>
+        <h2>잠깐 멈춤</h2>
+        <button id="resume-button" class="primary-button">계속하기</button>
+        <button id="restart-button" class="secondary-button">다시하기</button>
+        <button id="exit-button" class="text-button">나가기</button>
+      </div>
+    </div>
+    <script src="game.js"></script>
+  </body>
+</html>
