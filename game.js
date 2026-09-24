@@ -63,7 +63,8 @@ function throwObject(event) {
 function hitTarget(target, projectile, now) {
   if (!target.alive) return; target.alive = false; projectile.alive = false; projectile.el.remove();
   if (target.type.key === 'trap') {
-    state.score = Math.max(0, state.score + target.type.points); state.combo = 0; target.el.classList.add('fleeing'); target.el.style.transform = `translate(${window.innerWidth + 160}px, ${-window.innerHeight - 180}px) rotate(230deg)`; setTimeout(() => target.el.remove(), 430); return;
+    state.score = Math.max(0, state.score + target.type.points); state.combo = 0;
+    target.fleeing = true; target.el.classList.add('fleeing'); target.vx = 1050; target.vy = -840; return;
   }
   state.hits += 1;
   if (!state.fever) { state.combo += 1; state.maxCombo = Math.max(state.maxCombo, state.combo); state.lastHitAt = now; if (state.combo > 0 && state.combo % 50 === 0) startFever(now); }
@@ -87,7 +88,7 @@ function tick(now) {
   const spawnGap = state.fever ? 310 : Math.max(480, 950 - elapsed / 170); if (now >= state.spawnAt) { spawnTarget(now); state.spawnAt = now + spawnGap; }
   const rect = playfield.getBoundingClientRect();
   state.targets = state.targets.filter((t) => {
-    if (!t.alive && !t.falling) return false;
+    if (!t.alive && !t.falling && !t.fleeing) return false;
     if (t.type.key === 'trickster' && t.alive && now >= t.behaviorAt) { t.vx = (Math.random() * 2 - 1) * 190; t.vy = (Math.random() * 2 - 1) * 170; t.behaviorAt = now + 180 + Math.random() * 340; }
     t.x += t.vx / 60; t.y += t.vy / 60; t.el.style.transform = `translate(${t.x}px, ${t.y}px) rotate(${t.type.key === 'trickster' ? Math.sin(now / 65) * 14 : 0}deg)`;
     const gone = t.x < -t.size * 2 || t.x > rect.width + t.size * 2 || t.y < -t.size * 2 || t.y > rect.height + t.size * 2;
