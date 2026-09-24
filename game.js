@@ -20,7 +20,13 @@ const targetTypes = [
   { key: 'trap', size: 104, points: -50, weight: 6 },
   { key: 'trickster', size: 104, points: 70, weight: 9 },
 ];
-const targetAssets = [assets.target1, assets.target2, assets.target3, assets.target4, assets.target7];
+const targetAssets = [
+  { src: assets.target1, hitScale: 1 },
+  { src: assets.target2, hitScale: 1 },
+  { src: assets.target3, hitScale: 1.42 },
+  { src: assets.target4, hitScale: 1.42 },
+  { src: assets.target7, hitScale: 1 },
+];
 
 const state = { active: false, paused: false, startedAt: 0, pauseStartedAt: 0, pausedTotal: 0, score: 0, combo: 0, maxCombo: 0, hits: 0, fever: false, feverUntil: 0, lastHitAt: 0, targets: [], projectiles: [], spawnAt: 0, raf: null, loadedWeapon: null };
 let nextId = 1;
@@ -65,9 +71,9 @@ function spawnTarget(now) {
   const distance = Math.hypot(exitX - x, exitY - y) || 1;
   const vx = ((exitX - x) / distance) * speed;
   const vy = ((exitY - y) / distance) * speed;
-  const el = document.createElement('div'); const targetImage = image(random(targetAssets), 'target-asset');
+  const visual = random(targetAssets); const el = document.createElement('div'); const targetImage = image(visual.src, 'target-asset');
   el.className = `target ${type.key}`; el.append(targetImage); el.style.setProperty('--size', `${type.size}px`); targetLayer.append(el);
-  state.targets.push({ id: nextId++, type, el, image: targetImage, x, y, vx, vy, size: type.size, alive: true, behaviorAt: now + 430 + Math.random() * 640 });
+  state.targets.push({ id: nextId++, type, el, image: targetImage, x, y, vx, vy, size: type.size, hitScale: visual.hitScale, alive: true, behaviorAt: now + 430 + Math.random() * 640 });
 }
 
 function throwObject(event) {
@@ -135,7 +141,7 @@ function tick(now) {
     if (progress >= 1 && p.alive) {
       const landedOn = state.targets.find((t) => {
         if (!t.alive || t.invulnerable) return false;
-        const padding = 3;
+        const padding = 3 + (t.size * (t.hitScale - 1)) / 2;
         return p.endX >= t.x - padding && p.endX <= t.x + t.size + padding
           && p.endY >= t.y - padding && p.endY <= t.y + t.size + padding;
       });
