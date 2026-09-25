@@ -41,8 +41,6 @@ h1 span { color: #ffdc55; -webkit-text-stroke: 2px #fff; }
 .score-panel { justify-self: center; min-width: 120px; border: 3px solid rgba(255,255,255,.92); border-radius: 16px; background: rgba(19,26,69,.82); padding: 5px 15px; text-align: center; box-shadow: 0 4px 0 rgba(0,0,0,.2); }
 .score-panel strong { display: block; color: #ffde62; font-size: 1.45rem; line-height: 1; }
 .score-panel span { color: #fff; font-size: .76rem; font-weight: 900; letter-spacing: .1em; }
-.combo-panel { position: absolute; z-index: 10; top: 82px; left: 50%; min-width: 110px; padding: 7px 12px; border: 2px solid rgba(255,255,255,.8); border-radius: 13px; background: rgba(26,20,62,.8); text-align: center; color: #ffdf67; font-size: .72rem; font-weight: 900; letter-spacing: .08em; transform: translateX(-50%); pointer-events: none; }
-.combo-panel b { display: block; color: #fff; font-size: 1.55rem; line-height: 1; letter-spacing: 0; }
 .ambient-text-layer, .target-layer, .projectile-layer { position: absolute; inset: 0; pointer-events: none; }
 .ambient-text-layer { z-index: 1; overflow: hidden; display: grid; grid-template-rows: repeat(8, 1fr); padding: 108px 0 96px; }
 .shared-ambient { z-index: 0; padding: 0; }
@@ -55,7 +53,6 @@ h1 span { color: #ffdc55; -webkit-text-stroke: 2px #fff; }
 @keyframes scrollRight { from { transform: translateX(-50%); } to { transform: translateX(0); } }
 .target { position: absolute; display: grid; place-items: center; width: var(--size); height: var(--size); filter: drop-shadow(0 7px 0 rgba(0,0,0,.25)); will-change: transform; }
 .target-asset { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
-.hitbox-overlay { opacity: .34; filter: brightness(0) saturate(100%) invert(81%) sepia(97%) saturate(661%) hue-rotate(61deg) brightness(105%) contrast(103%); mix-blend-mode: screen; }
 .target.trap { filter: drop-shadow(0 0 10px #ff445c) drop-shadow(0 7px 0 rgba(0,0,0,.25)); animation: trapPulse .8s infinite alternate; }
 .target.trickster .target-asset { animation: targetWobble .22s steps(2, end) infinite; }
 .target::after { content: ''; position: absolute; inset: 8%; border-radius: 50%; pointer-events: none; }
@@ -68,14 +65,9 @@ h1 span { color: #ffdc55; -webkit-text-stroke: 2px #fff; }
 @keyframes targetWobble { to { transform: translate(5px,-4px) rotate(12deg) scale(1.05,.92); } }
 .projectile, .loaded-projectile { position: absolute; display: grid; place-items: center; width: 96px; height: 96px; will-change: transform; pointer-events: none; }
 .projectile img, .loaded-projectile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 6px 0 rgba(0,0,0,.24)); }
-.projectile-hitbox-overlay { z-index: 2; opacity: .76; filter: brightness(0) saturate(100%) invert(82%) sepia(47%) saturate(2500%) hue-rotate(146deg) brightness(118%) contrast(108%) !important; mix-blend-mode: normal; }
 .impact { position: absolute; width: 18px; height: 18px; border: 5px solid #fff7a8; border-radius: 50%; animation: impact .28s ease-out forwards; }
 @keyframes impact { to { transform: scale(5); opacity: 0; } }
 .loaded-projectile { z-index: 4; bottom: max(7px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); }
-.fever-banner { position: absolute; z-index: 12; top: 150px; left: 50%; opacity: 0; color: #ffeb55; font-size: clamp(2rem, 9vw, 4rem); font-weight: 1000; letter-spacing: .07em; pointer-events: none; text-shadow: 0 4px #d34735, 0 9px rgba(0,0,0,.2); transform: translate(-50%, -20px) scale(.7); transition: opacity .18s, transform .18s; }
-.fever-banner.show { opacity: 1; transform: translate(-50%, 0) scale(1); animation: feverBob .55s infinite alternate; }
-@keyframes feverBob { to { transform: translate(-50%, -6px) rotate(-2deg) scale(1.04); } }
-.playfield.fever { background: #090308; box-shadow: inset 0 0 80px rgba(255,74,74,.46); }
 .result-screen, .ranking-screen { place-items: center; padding: 20px; }
 .result-screen { background: radial-gradient(circle at 50% 15%, #46408b, #171831 66%); }
 .ranking-screen { background: #030304; isolation: isolate; }
