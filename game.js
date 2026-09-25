@@ -70,8 +70,19 @@ function spawnTarget(now) {
     exitY = 92 + Math.random() * Math.max(30, routeBottom - 150);
   }
   const centerX = rect.width / 2; const centerY = rect.height * .43; const radius = Math.min(rect.width * .29, rect.height * .24);
-  const angle = Math.random() * Math.PI * 2; const r = radius * Math.sqrt(Math.random());
-  const viaX = centerX + Math.cos(angle) * r; const viaY = centerY + Math.sin(angle) * r;
+  let viaX = centerX; let viaY = centerY;
+  for (let attempt = 0; attempt < 14; attempt += 1) {
+    const angle = Math.random() * Math.PI * 2; const r = radius * Math.sqrt(Math.random());
+    const candidateX = centerX + Math.cos(angle) * r; const candidateY = centerY + Math.sin(angle) * r;
+    const clear = state.targets.every((other) => {
+      if (!other.alive || other.fleeing) return true;
+      const otherX = other.waypoint && !other.waypoint.reached ? other.waypoint.x : other.x + other.size / 2;
+      const otherY = other.waypoint && !other.waypoint.reached ? other.waypoint.y : other.y + other.size / 2;
+      return Math.hypot(candidateX - otherX, candidateY - otherY) > type.size * 1.75;
+    });
+    viaX = candidateX; viaY = candidateY;
+    if (clear) break;
+  }
   const distance = Math.hypot(viaX - x, viaY - y) || 1;
   const vx = ((viaX - x) / distance) * speed;
   const vy = ((viaY - y) / distance) * speed;
@@ -176,7 +187,7 @@ function tick(now) {
     if (!p.alive) return false; const progress = Math.min(1, (now - p.startAt) / p.duration);
     const x = p.startX + (p.endX - p.startX) * progress; const y = p.startY + (p.endY - p.startY) * progress; p.x = x; p.y = y; const scale = 1;
     p.el.style.transform = `translate(${x - 48}px, ${y - 48}px) scale(${scale}) rotate(${progress * 480}deg)`;
-    if (progress >= .86 && p.alive) {
+    if (progress >= .97 && p.alive) {
       const landedOn = state.targets.find((t) => t.alive && !t.invulnerable && projectileOverlapsTarget(t, x, y));
       if (landedOn) hitTarget(landedOn, p, now);
     }
