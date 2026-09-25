@@ -1,8 +1,8 @@
 :root { color-scheme: dark; font-family: ui-rounded, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif; }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-body { margin: 0; min-width: 320px; min-height: 100dvh; overflow: hidden; background: #090b1a; color: #fff; }
+html, body { width: 100%; height: 100%; overflow: hidden; overscroll-behavior: none; }\nbody { margin: 0; min-width: 320px; min-height: 100dvh; background: #090b1a; color: #fff; }
 button { border: 0; color: inherit; font: inherit; font-weight: 800; cursor: pointer; touch-action: manipulation; }
-.app-shell, .screen { width: 100%; min-height: 100dvh; }
+.app-shell, .screen { width: 100%; height: 100dvh; min-height: 0; overflow: clip; }
 .screen { display: none; position: relative; overflow: hidden; }
 .screen.active { display: grid; }
 .home-screen { place-items: center; isolation: isolate; background: #030304; }
