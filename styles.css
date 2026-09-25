@@ -56,7 +56,6 @@ h1 span { color: #ffdc55; -webkit-text-stroke: 2px #fff; }
 .target.trap { filter: drop-shadow(0 0 10px #ff445c) drop-shadow(0 7px 0 rgba(0,0,0,.25)); animation: trapPulse .8s infinite alternate; }
 .target.trickster .target-asset { animation: targetWobble .22s steps(2, end) infinite; }
 .target::after { content: ''; position: absolute; inset: 8%; border-radius: 50%; pointer-events: none; }
-.target.pooed::after { background: rgba(104,57,15,.62); mix-blend-mode: multiply; }
 .target.pooed .target-asset { filter: sepia(1) saturate(2.4) hue-rotate(336deg) brightness(.66); }
 .target.pigged .target-asset { transform: rotate(8deg) scale(1.15); }
 .target.manholed { filter: none; }
