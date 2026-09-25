@@ -35,7 +35,7 @@ let nextId = 1;
 function showScreen(name) { Object.entries(screens).forEach(([key, node]) => node.classList.toggle('active', key === name)); }
 function random(array) { return array[Math.floor(Math.random() * array.length)]; }
 function image(src, className = '') { const node = document.createElement('img'); node.src = src; node.className = className; node.alt = ''; node.draggable = false; return node; }
-function updateLoadedProjectile() { const holder = $('#loaded-projectile'); holder.replaceChildren(image(state.loadedWeapon.asset)); }
+function updateLoadedProjectile() { const holder = $('#loaded-projectile'); holder.replaceChildren(image(state.loadedWeapon.asset), image(state.loadedWeapon.asset, 'projectile-hitbox-overlay')); }
 function loadTargetMask(src) {
   return new Promise((resolve) => {
     const source = new Image();
@@ -49,17 +49,29 @@ function loadTargetMask(src) {
     source.src = src;
   });
 }
-const targetMasksReady = Promise.all(targetAssets.map((item) => loadTargetMask(item.src)));
-function hitsTargetSilhouette(target, x, y) {
-  const mask = targetMasks.get(target.asset); if (!mask) return false;
-  const localX = x - target.x; const localY = y - target.y;
-  const scale = Math.min(target.size / mask.width, target.size / mask.height);
+const targetMasksReady = Promise.all([...targetAssets.map((item) => item.src), ...weapons.map((item) => item.asset)].map(loadTargetMask));
+function spriteAlphaAt(src, size, localX, localY) {
+  const mask = targetMasks.get(src); if (!mask) return false;
+  const scale = Math.min(size / mask.width, size / mask.height);
   const drawnWidth = mask.width * scale; const drawnHeight = mask.height * scale;
-  const drawX = (target.size - drawnWidth) / 2; const drawY = (target.size - drawnHeight) / 2;
+  const drawX = (size - drawnWidth) / 2; const drawY = (size - drawnHeight) / 2;
   if (localX < drawX || localX >= drawX + drawnWidth || localY < drawY || localY >= drawY + drawnHeight) return false;
   const pixelX = Math.min(mask.width - 1, Math.floor((localX - drawX) / scale));
   const pixelY = Math.min(mask.height - 1, Math.floor((localY - drawY) / scale));
   return mask.alpha[(pixelY * mask.width + pixelX) * 4 + 3] > 12;
+}
+function hitsTargetSilhouette(target, x, y) { return spriteAlphaAt(target.asset, target.size, x - target.x, y - target.y); }
+function projectileOverlapsTarget(target, projectile) {
+  const projectileSize = 96; const half = projectileSize / 2; const angle = 480 * Math.PI / 180; const cos = Math.cos(angle); const sin = Math.sin(angle);
+  const minX = Math.ceil(Math.max(target.x, projectile.endX - half)); const maxX = Math.floor(Math.min(target.x + target.size, projectile.endX + half));
+  const minY = Math.ceil(Math.max(target.y, projectile.endY - half)); const maxY = Math.floor(Math.min(target.y + target.size, projectile.endY + half));
+  for (let worldY = minY; worldY <= maxY; worldY += 1) for (let worldX = minX; worldX <= maxX; worldX += 1) {
+    if (!hitsTargetSilhouette(target, worldX, worldY)) continue;
+    const dx = worldX - projectile.endX; const dy = worldY - projectile.endY;
+    const projectileX = cos * dx + sin * dy + half; const projectileY = -sin * dx + cos * dy + half;
+    if (spriteAlphaAt(projectile.weapon.asset, projectileSize, projectileX, projectileY)) return true;
+  }
+  return false;
 }
 function weightedTarget() {
   const allowed = state.fever ? targetTypes.filter((item) => item.key !== 'trap') : targetTypes;
@@ -107,7 +119,7 @@ function throwObject(event) {
   if (!state.active || state.paused || event.target.closest('button')) return;
   const rect = playfield.getBoundingClientRect(); const weapon = state.loadedWeapon;
   const endX = event.clientX - rect.left; const endY = event.clientY - rect.top; const startX = rect.width / 2; const startY = rect.height - 35;
-  const el = document.createElement('div'); el.className = 'projectile'; el.append(image(weapon.asset)); projectileLayer.append(el);
+  const el = document.createElement('div'); el.className = 'projectile'; el.append(image(weapon.asset), image(weapon.asset, 'projectile-hitbox-overlay')); projectileLayer.append(el);
   state.projectiles.push({ id: nextId++, el, weapon, startX, startY, endX, endY, startAt: performance.now(), duration: 570, alive: true });
   state.loadedWeapon = random(weapons); updateLoadedProjectile();
 }
@@ -166,7 +178,7 @@ function tick(now) {
     const x = p.startX + (p.endX - p.startX) * progress; const y = p.startY + (p.endY - p.startY) * progress + arc; const scale = 1.08 - .48 * Math.sin(progress * Math.PI) - .08 * progress;
     p.el.style.transform = `translate(${x - 48}px, ${y - 48}px) scale(${scale}) rotate(${progress * 480}deg)`;
     if (progress >= 1 && p.alive) {
-      const landedOn = state.targets.find((t) => t.alive && !t.invulnerable && hitsTargetSilhouette(t, p.endX, p.endY));
+      const landedOn = state.targets.find((t) => t.alive && !t.invulnerable && projectileOverlapsTarget(t, p));
       if (landedOn) hitTarget(landedOn, p, now);
       if (p.alive) { p.el.remove(); p.alive = false; if (!state.fever) state.combo = 0; }
     }
