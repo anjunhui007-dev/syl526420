@@ -86,19 +86,39 @@ function throwObject(event) {
   state.loadedWeapon = random(weapons); updateLoadedProjectile();
 }
 
+function spawnImpact(x, y) {
+  const impact = document.createElement('div'); impact.className = 'impact';
+  impact.style.left = `${x - 14}px`; impact.style.top = `${y - 14}px`; projectileLayer.append(impact);
+  setTimeout(() => impact.remove(), 320);
+}
+function spawnHeartPair(x, y) {
+  ['target-heart', 'projectile-heart'].forEach((kind) => {
+    const heart = document.createElement('div'); heart.className = `heart-impact ${kind}`; heart.textContent = '♥';
+    heart.style.left = `${x}px`; heart.style.top = `${y}px`; projectileLayer.append(heart);
+    setTimeout(() => heart.remove(), 700);
+  });
+}
+
 function hitTarget(target, projectile, now) {
-  if (!target.alive || target.invulnerable) return; target.alive = false; projectile.alive = false; projectile.el.remove();
+  if (!target.alive || target.invulnerable) return;
+  const hitX = projectile.x ?? target.x + target.size / 2; const hitY = projectile.y ?? target.y + target.size / 2;
+  target.alive = false; projectile.alive = false;
   if (target.type.key === 'trap') {
     target.alive = true; target.invulnerable = true;
     state.score = Math.max(0, state.score + target.type.points);
     target.image.src = trapRunFrames[0];
-    target.fleeing = { startedAt: now, fromX: target.x, fromY: target.y, toX: playfield.clientWidth + target.size * 2, toY: -target.size * 2, duration: 520 };
-    target.el.classList.add('fleeing'); return;
+    target.fleeing = { startedAt: now, fromX: target.x, fromY: target.y, toX: playfield.clientWidth + target.size * 2, toY: -target.size * 2, duration: 1800 };
+    target.el.classList.add('fleeing'); target.el.style.zIndex = '0'; projectile.el.remove(); return;
   }
+  if (projectile.weapon.hit === 'risan') {
+    state.hits += 1; state.score += target.type.points;
+    spawnHeartPair(hitX, hitY); target.el.remove(); projectile.el.remove(); return;
+  }
+  projectile.el.remove();
   state.hits += 1;
   state.score += target.type.points;
-  const impact = document.createElement('div'); impact.className = 'impact'; impact.style.left = `${target.x}px`; impact.style.top = `${target.y}px`; projectileLayer.append(impact); setTimeout(() => impact.remove(), 320);
-  if (projectile.weapon.hit === 'manhole') { target.image.src = assets.manholeHitPerson; target.el.classList.add('manholed'); target.falling = true; target.vx = 0; target.vy = 650; setTimeout(() => target.el.remove(), 650); }
+  if (projectile.weapon.hit !== 'poo') spawnImpact(hitX, hitY);
+  if (projectile.weapon.hit === 'manhole') { target.image.src = assets.manholeHitPerson; target.el.classList.add('manholed'); target.falling = true; target.vx = 0; target.vy = 200; setTimeout(() => target.el.remove(), 1800); }
   else if (projectile.weapon.hit === 'poo') { target.el.classList.add('pooed'); target.lingerUntil = now + 330; }
   else if (projectile.weapon.hit === 'pig') { target.image.src = assets.pigHitPork; target.el.classList.add('pigged'); target.lingerUntil = now + 360; }
   else { target.el.remove(); }
@@ -113,11 +133,11 @@ function tick(now) {
     if (!t.alive && !t.falling && !t.fleeing && !t.lingerUntil) return false;
     if (t.fleeing) {
       const p = Math.min(1, (now - t.fleeing.startedAt) / t.fleeing.duration);
-      t.image.src = trapRunFrames[Math.floor((now - t.fleeing.startedAt) / 85) % trapRunFrames.length];
+      t.image.src = trapRunFrames[Math.floor((now - t.fleeing.startedAt) / 150) % trapRunFrames.length];
       const ease = 1 - Math.pow(1 - p, 3);
       t.x = t.fleeing.fromX + (t.fleeing.toX - t.fleeing.fromX) * ease;
       t.y = t.fleeing.fromY + (t.fleeing.toY - t.fleeing.fromY) * ease;
-      t.el.style.transform = `translate(${t.x}px, ${t.y}px) rotate(${p * 400}deg)`;
+      t.el.style.transform = `translate(${t.x}px, ${t.y}px)`;
       if (p === 1) { t.el.remove(); return false; }
       return true;
     }
@@ -132,7 +152,7 @@ function tick(now) {
   });
   state.projectiles = state.projectiles.filter((p) => {
     if (!p.alive) return false; const progress = Math.min(1, (now - p.startAt) / p.duration);
-    const x = p.startX + (p.endX - p.startX) * progress; const y = p.startY + (p.endY - p.startY) * progress; const scale = 1;
+    const x = p.startX + (p.endX - p.startX) * progress; const y = p.startY + (p.endY - p.startY) * progress; p.x = x; p.y = y; const scale = 1;
     p.el.style.transform = `translate(${x - 48}px, ${y - 48}px) scale(${scale}) rotate(${progress * 480}deg)`;
     if (progress >= .86 && p.alive) {
       const landedOn = state.targets.find((t) => t.alive && !t.invulnerable && projectileOverlapsTarget(t, x, y));
@@ -155,5 +175,7 @@ function resumeGame() { if (!state.paused) return; state.pausedTotal += performa
 
 $('#start-button').addEventListener('click', resetGame); $('#retry-button').addEventListener('click', resetGame); $('#pause-button').addEventListener('click', togglePause); $('#resume-button').addEventListener('click', resumeGame); $('#restart-button').addEventListener('click', resetGame); $('#exit-button').addEventListener('click', () => { state.active = false; pauseModal.classList.remove('open'); showScreen('home'); }); $('#ranking-button').addEventListener('click', showRanking); $('#result-ranking-button').addEventListener('click', showRanking); $('#ranking-home-button').addEventListener('click', () => showScreen('home')); $('#result-home-button').addEventListener('click', () => showScreen('home')); playfield.addEventListener('pointerdown', throwObject);
 document.querySelectorAll('[data-home-asset]').forEach((node) => node.append(image(assets[node.dataset.homeAsset])));
-const ambientMarkup = document.querySelector('#game-screen .ambient-text-layer').innerHTML;
+const gameAmbient = document.querySelector('#game-screen .ambient-text-layer');
+gameAmbient.innerHTML += gameAmbient.innerHTML;
+const ambientMarkup = gameAmbient.innerHTML;
 document.querySelectorAll('.shared-ambient').forEach((node) => { node.innerHTML = ambientMarkup; });
