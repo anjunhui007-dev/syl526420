@@ -106,3 +106,5 @@ h2 { margin-bottom: 18px; font-size: 2rem; }
 @media (min-width: 700px) { .home-target.one { left: 17%; } .home-target.two { right: 18%; } .home-target.three { left: 20%; } .home-target.chaos { right: 20%; } }
 
 .double-event-label { display: block; min-height: 1.1em; margin-top: 2px; color: #ffdf4e !important; font-size: .72rem !important; font-weight: 1000 !important; letter-spacing: .06em !important; text-shadow: 0 1px 0 #6a2600; }
+
+.nickname-warning { min-height: 1.2em; margin: 5px 4px 0; color: #ff9b95; font-size: .75rem; font-weight: 900; text-align: center; }
