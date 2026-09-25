@@ -55,7 +55,7 @@ h1 span { color: #ffdc55; -webkit-text-stroke: 2px #fff; }
 .target-layer { z-index: 2; }.projectile-layer { z-index: 3; }
 .marquee-row { overflow: hidden; display: flex; align-items: center; color: rgba(255,255,255,.16); font-size: clamp(.82rem, 2.65vw, 1.18rem); font-weight: 1000; letter-spacing: -.06em; line-height: 1; white-space: nowrap; transform: rotate(-2deg) scale(1.16); }
 .marquee-row div { width: max-content; min-width: 500%; text-shadow: 0 2px 0 rgba(122,62,255,.28); animation: scrollLeft var(--speed) linear infinite; }
-.marquee-row.right { transform: rotate(2deg) scale(1.16); color: rgba(255,198,79,.15); }.marquee-row.right div { animation-name: scrollRight; }
+.marquee-row.right { transform: rotate(2deg) scale(1.16); color: rgba(255,198,79,.15); }.marquee-row.right div { animation: scrollRight var(--speed) linear infinite !important; }
 .r1 { --speed: 8.4s; }.r2 { --speed: 6.8s; }.r3 { --speed: 10.1s; }.r4 { --speed: 7.6s; }.r5 { --speed: 9.3s; }.r6 { --speed: 5.9s; }.r7 { --speed: 11.2s; }.r8 { --speed: 7.1s; }
 @keyframes scrollLeft { from { transform: translateX(-20%); } to { transform: translateX(-40%); } }
 @keyframes scrollRight { from { transform: translateX(-40%); } to { transform: translateX(-20%); } }
@@ -95,8 +95,8 @@ h2 { margin-bottom: 18px; font-size: 2rem; }
 .result-stats { display: flex; justify-content: space-around; margin-bottom: 8px; }
 .result-stats b { color: #fff; font-size: 1.2rem; }
 .ranking-list { display: grid; gap: 8px; margin: 0 0 22px; padding: 0; list-style: none; text-align: left; }
-.ranking-list li { display: grid; grid-template-columns: 36px minmax(0, 1fr) minmax(68px, .8fr) minmax(76px, auto); gap: 9px; align-items: center; padding: 12px 15px; border-radius: 12px; background: #171535; font-weight: 900; }
-.rank-badge { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: #4c438d; color: #ffdf63; font-size: .8rem; font-weight: 1000; }
+.ranking-list li { display: grid; grid-template-columns: 28px minmax(0, 1fr) 66px 70px; gap: 4px; align-items: center; padding: 10px 9px; border-radius: 12px; background: #171535; font-weight: 900; }
+.rank-badge { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: #4c438d; color: #ffdf63; font-size: .72rem; font-weight: 1000; }
 .ranking-list li:nth-child(1) .rank-badge { background: #e19b22; color: #2c1a00; }
 .ranking-list li:nth-child(2) .rank-badge { background: #9da4b4; color: #18202a; }
 .ranking-list li:nth-child(3) .rank-badge { background: #a96539; color: #fff1de; }
