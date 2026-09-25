@@ -68,7 +68,7 @@ h1 span { color: #ffdc55; -webkit-text-stroke: 2px #fff; }
 @keyframes targetWobble { to { transform: translate(5px,-4px) rotate(12deg) scale(1.05,.92); } }
 .projectile, .loaded-projectile { position: absolute; display: grid; place-items: center; width: 96px; height: 96px; will-change: transform; pointer-events: none; }
 .projectile img, .loaded-projectile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 6px 0 rgba(0,0,0,.24)); }
-.projectile-hitbox-overlay { opacity: .34; filter: brightness(0) saturate(100%) invert(82%) sepia(47%) saturate(826%) hue-rotate(146deg) brightness(99%) contrast(103%) !important; mix-blend-mode: screen; }
+.projectile-hitbox-overlay { z-index: 2; opacity: .76; filter: brightness(0) saturate(100%) invert(82%) sepia(47%) saturate(2500%) hue-rotate(146deg) brightness(118%) contrast(108%) !important; mix-blend-mode: normal; }
 .impact { position: absolute; width: 18px; height: 18px; border: 5px solid #fff7a8; border-radius: 50%; animation: impact .28s ease-out forwards; }
 @keyframes impact { to { transform: scale(5); opacity: 0; } }
 .loaded-projectile { z-index: 4; bottom: max(7px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); }
