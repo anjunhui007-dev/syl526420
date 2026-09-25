@@ -7,11 +7,11 @@ const projectileLayer = $('#projectile-layer');
 const pauseModal = $('#pause-modal');
 const assets = window.HIT_ASSETS;
 const weapons = [
-  { name: '돼지', asset: assets.projectilePig, hit: 'pig' },
-  { name: '똥', asset: assets.projectilePoo, hit: 'poo' },
-  { name: '맨홀뚜껑', asset: assets.projectileManhole, hit: 'manhole' },
-  { name: '돌', asset: assets.projectileRock, hit: 'rock' },
-  { name: '리산성', asset: assets.projectileRisangseong, hit: 'risan' },
+  { name: '돼지', asset: assets.projectileNew0, hit: 'pig' },
+  { name: '똥', asset: assets.projectileNew1, hit: 'poo' },
+  { name: '맨홀뚜껑', asset: assets.projectileNew2, hit: 'manhole' },
+  { name: '돌', asset: assets.projectileNew3, hit: 'rock' },
+  { name: '리산성', asset: assets.projectileNew4, hit: 'risan' },
 ];
 const targetTypes = [
   { key: 'normal', size: 86, points: 10, weight: 48 },
