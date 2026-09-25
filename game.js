@@ -21,73 +21,33 @@ const targetTypes = [
   { key: 'trickster', size: 86, points: 70, weight: 9 },
 ];
 const targetAssets = [
-  { src: assets.target1 },
-  { src: assets.target2 },
-  { src: assets.target3 },
-  { src: assets.target4 },
-  { src: assets.target7 },
+  { src: assets.targetNew0 }, { src: assets.targetNew1 }, { src: assets.targetNew2 }, { src: assets.targetNew3 },
+  { src: assets.targetNew4 }, { src: assets.targetNew5 }, { src: assets.targetNew6 }, { src: assets.targetNew7 },
 ];
-const targetMasks = new Map();
-
-const state = { active: false, paused: false, startedAt: 0, pauseStartedAt: 0, pausedTotal: 0, score: 0, combo: 0, maxCombo: 0, hits: 0, fever: false, feverUntil: 0, lastHitAt: 0, targets: [], projectiles: [], spawnAt: 0, raf: null, loadedWeapon: null };
+const state = { active: false, paused: false, startedAt: 0, pauseStartedAt: 0, pausedTotal: 0, score: 0, hits: 0, targets: [], projectiles: [], spawnAt: 0, raf: null, loadedWeapon: null };
 let nextId = 1;
 
 function showScreen(name) { Object.entries(screens).forEach(([key, node]) => node.classList.toggle('active', key === name)); }
 function random(array) { return array[Math.floor(Math.random() * array.length)]; }
 function image(src, className = '') { const node = document.createElement('img'); node.src = src; node.className = className; node.alt = ''; node.draggable = false; return node; }
-function updateLoadedProjectile() { const holder = $('#loaded-projectile'); holder.replaceChildren(image(state.loadedWeapon.asset), image(state.loadedWeapon.asset, 'projectile-hitbox-overlay')); }
-function loadTargetMask(src) {
-  return new Promise((resolve) => {
-    const source = new Image();
-    source.onload = () => {
-      const canvas = document.createElement('canvas'); canvas.width = source.naturalWidth; canvas.height = source.naturalHeight;
-      const context = canvas.getContext('2d', { willReadFrequently: true }); context.drawImage(source, 0, 0);
-      targetMasks.set(src, { width: source.naturalWidth, height: source.naturalHeight, alpha: context.getImageData(0, 0, source.naturalWidth, source.naturalHeight).data });
-      resolve();
-    };
-    source.onerror = () => resolve();
-    source.src = src;
-  });
-}
-const targetMasksReady = Promise.all([...targetAssets.map((item) => item.src), ...weapons.map((item) => item.asset)].map(loadTargetMask));
-function spriteAlphaAt(src, size, localX, localY) {
-  const mask = targetMasks.get(src); if (!mask) return false;
-  const scale = Math.min(size / mask.width, size / mask.height);
-  const drawnWidth = mask.width * scale; const drawnHeight = mask.height * scale;
-  const drawX = (size - drawnWidth) / 2; const drawY = (size - drawnHeight) / 2;
-  if (localX < drawX || localX >= drawX + drawnWidth || localY < drawY || localY >= drawY + drawnHeight) return false;
-  const pixelX = Math.min(mask.width - 1, Math.floor((localX - drawX) / scale));
-  const pixelY = Math.min(mask.height - 1, Math.floor((localY - drawY) / scale));
-  return mask.alpha[(pixelY * mask.width + pixelX) * 4 + 3] > 12;
-}
-function hitsTargetSilhouette(target, x, y) { return spriteAlphaAt(target.asset, target.size, x - target.x, y - target.y); }
-function projectileOverlapsTarget(target, projectile, centerX, centerY, rotation, scale) {
-  const projectileSize = 96 * scale; const half = projectileSize / 2; const angle = rotation * Math.PI / 180; const cos = Math.cos(angle); const sin = Math.sin(angle);
-  const minX = Math.ceil(Math.max(target.x, centerX - half)); const maxX = Math.floor(Math.min(target.x + target.size, centerX + half));
-  const minY = Math.ceil(Math.max(target.y, centerY - half)); const maxY = Math.floor(Math.min(target.y + target.size, centerY + half));
-  for (let worldY = minY; worldY <= maxY; worldY += 1) for (let worldX = minX; worldX <= maxX; worldX += 1) {
-    if (!hitsTargetSilhouette(target, worldX, worldY)) continue;
-    const dx = worldX - centerX; const dy = worldY - centerY;
-    const projectileX = cos * dx + sin * dy + half; const projectileY = -sin * dx + cos * dy + half;
-    if (spriteAlphaAt(projectile.weapon.asset, projectileSize, projectileX, projectileY)) return true;
-  }
-  return false;
+function updateLoadedProjectile() { $('#loaded-projectile').replaceChildren(image(state.loadedWeapon.asset)); }
+function projectileOverlapsTarget(target, centerX, centerY) {
+  const half = 48;
+  return centerX + half > target.x && centerX - half < target.x + target.size && centerY + half > target.y && centerY - half < target.y + target.size;
 }
 function weightedTarget() {
-  const allowed = state.fever ? targetTypes.filter((item) => item.key !== 'trap') : targetTypes;
-  const total = allowed.reduce((sum, item) => sum + item.weight, 0);
+  const total = targetTypes.reduce((sum, item) => sum + item.weight, 0);
   let roll = Math.random() * total;
-  return allowed.find((item) => (roll -= item.weight) <= 0) || allowed[0];
+  return targetTypes.find((item) => (roll -= item.weight) <= 0) || targetTypes[0];
 }
 function formatTime(milliseconds) { const sec = Math.max(0, Math.ceil(milliseconds / 1000)); return `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`; }
 function gameTime(now) { return now - state.startedAt - state.pausedTotal; }
-function updateHud(now) { $('#score-value').textContent = state.score; $('#timer-value').textContent = formatTime(90000 - gameTime(now)); $('#combo-value').textContent = state.combo; }
+function updateHud(now) { $('#score-value').textContent = state.score; $('#timer-value').textContent = formatTime(90000 - gameTime(now)); }
 
-async function resetGame() {
-  await targetMasksReady;
+function resetGame() {
   cancelAnimationFrame(state.raf); targetLayer.replaceChildren(); projectileLayer.replaceChildren();
-  Object.assign(state, { active: true, paused: false, startedAt: performance.now(), pauseStartedAt: 0, pausedTotal: 0, score: 0, combo: 0, maxCombo: 0, hits: 0, fever: false, feverUntil: 0, lastHitAt: 0, targets: [], projectiles: [], spawnAt: 0, loadedWeapon: random(weapons) });
-  playfield.classList.remove('fever'); $('#fever-banner').classList.remove('show'); pauseModal.classList.remove('open'); pauseModal.setAttribute('aria-hidden', 'true');
+  Object.assign(state, { active: true, paused: false, startedAt: performance.now(), pauseStartedAt: 0, pausedTotal: 0, score: 0, hits: 0, targets: [], projectiles: [], spawnAt: 0, loadedWeapon: random(weapons) });
+  pauseModal.classList.remove('open'); pauseModal.setAttribute('aria-hidden', 'true');
   updateLoadedProjectile(); showScreen('game'); state.raf = requestAnimationFrame(tick);
 }
 
@@ -111,16 +71,16 @@ function spawnTarget(now) {
   const distance = Math.hypot(exitX - x, exitY - y) || 1;
   const vx = ((exitX - x) / distance) * speed;
   const vy = ((exitY - y) / distance) * speed;
-  const visual = random(targetAssets); const el = document.createElement('div'); const targetImage = image(visual.src, 'target-asset'); const hitboxImage = image(visual.src, 'target-asset hitbox-overlay');
-  el.className = `target ${type.key}`; el.append(targetImage, hitboxImage); el.style.setProperty('--size', `${type.size}px`); targetLayer.append(el);
-  state.targets.push({ id: nextId++, type, el, image: targetImage, hitboxImage, asset: visual.src, x, y, vx, vy, size: type.size, alive: true, behaviorAt: now + 430 + Math.random() * 640 });
+  const visual = random(targetAssets); const el = document.createElement('div'); const targetImage = image(visual.src, 'target-asset');
+  el.className = `target ${type.key}`; el.append(targetImage); el.style.setProperty('--size', `${type.size}px`); targetLayer.append(el);
+  state.targets.push({ id: nextId++, type, el, image: targetImage, asset: visual.src, x, y, vx, vy, size: type.size, alive: true, behaviorAt: now + 430 + Math.random() * 640 });
 }
 
 function throwObject(event) {
   if (!state.active || state.paused || event.target.closest('button')) return;
   const rect = playfield.getBoundingClientRect(); const weapon = state.loadedWeapon;
   const endX = event.clientX - rect.left; const endY = event.clientY - rect.top; const startX = rect.width / 2; const startY = rect.height - 35;
-  const el = document.createElement('div'); el.className = 'projectile'; el.append(image(weapon.asset), image(weapon.asset, 'projectile-hitbox-overlay')); projectileLayer.append(el);
+  const el = document.createElement('div'); el.className = 'projectile'; el.append(image(weapon.asset)); projectileLayer.append(el);
   state.projectiles.push({ id: nextId++, el, weapon, startX, startY, endX, endY, startAt: performance.now(), duration: 570, alive: true });
   state.loadedWeapon = random(weapons); updateLoadedProjectile();
 }
@@ -129,30 +89,23 @@ function hitTarget(target, projectile, now) {
   if (!target.alive || target.invulnerable) return; target.alive = false; projectile.alive = false; projectile.el.remove();
   if (target.type.key === 'trap') {
     target.alive = true; target.invulnerable = true;
-    state.score = Math.max(0, state.score + target.type.points); state.combo = 0;
+    state.score = Math.max(0, state.score + target.type.points);
     target.fleeing = { startedAt: now, fromX: target.x, fromY: target.y, toX: playfield.clientWidth + target.size * 2, toY: -target.size * 2, duration: 520 };
     target.el.classList.add('fleeing'); return;
   }
   state.hits += 1;
-  if (!state.fever) { state.combo += 1; state.maxCombo = Math.max(state.maxCombo, state.combo); state.lastHitAt = now; if (state.combo > 0 && state.combo % 50 === 0) startFever(now); }
-  const comboMultiplier = state.fever ? 2 : (state.combo >= 10 ? 1.5 : state.combo >= 3 ? 1.2 : 1);
-  state.score += Math.round(target.type.points * comboMultiplier);
+  state.score += target.type.points;
   const impact = document.createElement('div'); impact.className = 'impact'; impact.style.left = `${target.x}px`; impact.style.top = `${target.y}px`; projectileLayer.append(impact); setTimeout(() => impact.remove(), 320);
-  if (projectile.weapon.hit === 'manhole') { target.image.src = assets.targetManhole; target.hitboxImage.src = assets.targetManhole; target.el.classList.add('manholed'); target.falling = true; target.vx = 0; target.vy = 650; setTimeout(() => target.el.remove(), 650); }
+  if (projectile.weapon.hit === 'manhole') { target.image.src = assets.targetManhole; target.el.classList.add('manholed'); target.falling = true; target.vx = 0; target.vy = 650; setTimeout(() => target.el.remove(), 650); }
   else if (projectile.weapon.hit === 'poo') { target.el.classList.add('pooed'); target.lingerUntil = now + 330; }
-  else if (projectile.weapon.hit === 'pig') { target.image.src = assets.targetHitPig; target.hitboxImage.src = assets.targetHitPig; target.el.classList.add('pigged'); target.lingerUntil = now + 360; }
+  else if (projectile.weapon.hit === 'pig') { target.image.src = assets.targetHitPig; target.el.classList.add('pigged'); target.lingerUntil = now + 360; }
   else { target.el.remove(); }
 }
-
-function startFever(now) { state.fever = true; state.feverUntil = now + 10000; playfield.classList.add('fever'); $('#fever-banner').classList.add('show'); }
-function endFever(now) { state.fever = false; state.lastHitAt = now; playfield.classList.remove('fever'); $('#fever-banner').classList.remove('show'); }
 
 function tick(now) {
   if (!state.active || state.paused) return;
   const elapsed = gameTime(now); if (elapsed >= 90000) return finishGame();
-  if (state.fever && now >= state.feverUntil) endFever(now);
-  if (!state.fever && state.combo > 0 && now - state.lastHitAt > 5000) state.combo = 0;
-  const spawnGap = state.fever ? 310 : Math.max(480, 950 - elapsed / 170); if (now >= state.spawnAt) { spawnTarget(now); state.spawnAt = now + spawnGap; }
+  const spawnGap = Math.max(430, 820 - elapsed / 190); if (now >= state.spawnAt) { spawnTarget(now); state.spawnAt = now + spawnGap; }
   const rect = playfield.getBoundingClientRect();
   state.targets = state.targets.filter((t) => {
     if (!t.alive && !t.falling && !t.fleeing && !t.lingerUntil) return false;
@@ -179,18 +132,18 @@ function tick(now) {
     const x = p.startX + (p.endX - p.startX) * progress; const y = p.startY + (p.endY - p.startY) * progress; const scale = 1;
     p.el.style.transform = `translate(${x - 48}px, ${y - 48}px) scale(${scale}) rotate(${progress * 480}deg)`;
     if (progress >= .86 && p.alive) {
-      const landedOn = state.targets.find((t) => t.alive && !t.invulnerable && projectileOverlapsTarget(t, p, x, y, progress * 480, scale));
+      const landedOn = state.targets.find((t) => t.alive && !t.invulnerable && projectileOverlapsTarget(t, x, y));
       if (landedOn) hitTarget(landedOn, p, now);
     }
     if (progress >= 1 && p.alive) {
-      if (p.alive) { p.el.remove(); p.alive = false; if (!state.fever) state.combo = 0; }
+      if (p.alive) { p.el.remove(); p.alive = false; }
     }
     return p.alive;
   });
   updateHud(now); state.raf = requestAnimationFrame(tick);
 }
 
-function finishGame() { state.active = false; cancelAnimationFrame(state.raf); targetLayer.replaceChildren(); projectileLayer.replaceChildren(); saveScore(state.score); $('#final-score').textContent = state.score; $('#hit-count').textContent = state.hits; $('#max-combo').textContent = state.maxCombo; showScreen('result'); }
+function finishGame() { state.active = false; cancelAnimationFrame(state.raf); targetLayer.replaceChildren(); projectileLayer.replaceChildren(); saveScore(state.score); $('#final-score').textContent = state.score; $('#hit-count').textContent = state.hits; showScreen('result'); }
 function rankings() { return JSON.parse(localStorage.getItem('hit-ris-ranking') || '[]'); }
 function saveScore(score) { const list = [...rankings(), { score, date: new Date().toLocaleDateString('ko-KR') }].sort((a, b) => b.score - a.score).slice(0, 10); localStorage.setItem('hit-ris-ranking', JSON.stringify(list)); }
 function showRanking() { const list = rankings(); const target = $('#ranking-list'); target.replaceChildren(); if (!list.length) { const empty = document.createElement('li'); empty.className = 'empty'; empty.textContent = '아직 기록이 없습니다.'; target.append(empty); } else list.forEach((record) => { const item = document.createElement('li'); item.textContent = `${record.score.toLocaleString()}점`; const small = document.createElement('small'); small.textContent = `  ·  ${record.date}`; item.append(small); target.append(item); }); showScreen('ranking'); }
