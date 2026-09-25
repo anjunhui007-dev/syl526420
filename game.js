@@ -36,14 +36,18 @@ function projectileOverlapsTarget(target, centerX, centerY) {
   const half = 48;
   return centerX + half > target.x && centerX - half < target.x + target.size && centerY + half > target.y && centerY - half < target.y + target.size;
 }
-function weightedTarget() {
-  const total = targetTypes.reduce((sum, item) => sum + item.weight, 0);
+function isDoubleEvent(now) { return gameTime(now) >= 60000; }
+function scoreMultiplier(now) { return isDoubleEvent(now) ? 2 : 1; }
+function weightedTarget(now) {
+  const doubleEvent = isDoubleEvent(now);
+  const weighted = targetTypes.map((item) => ({ ...item, weight: item.weight * (doubleEvent && (item.key === 'trap' || item.key === 'trickster') ? 2 : 1) }));
+  const total = weighted.reduce((sum, item) => sum + item.weight, 0);
   let roll = Math.random() * total;
-  return targetTypes.find((item) => (roll -= item.weight) <= 0) || targetTypes[0];
+  return weighted.find((item) => (roll -= item.weight) <= 0) || weighted[0];
 }
 function formatTime(milliseconds) { const sec = Math.max(0, Math.ceil(milliseconds / 1000)); return `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`; }
 function gameTime(now) { return now - state.startedAt - state.pausedTotal; }
-function updateHud(now) { $('#score-value').textContent = state.score; $('#timer-value').textContent = formatTime(90000 - gameTime(now)); }
+function updateHud(now) { $('#score-value').textContent = state.score; $('#timer-value').textContent = formatTime(90000 - gameTime(now)); $('#double-event-label').textContent = isDoubleEvent(now) ? '점수 2배!' : ''; }
 
 function resetGame() {
   cancelAnimationFrame(state.raf); targetLayer.replaceChildren(); projectileLayer.replaceChildren();
@@ -53,11 +57,11 @@ function resetGame() {
 }
 
 function spawnTarget(now) {
-  const type = weightedTarget(); const rect = playfield.getBoundingClientRect(); const edgeRoll = Math.random();
+  const type = weightedTarget(now); const rect = playfield.getBoundingClientRect(); const edgeRoll = Math.random();
   const entry = edgeRoll < .72 ? (Math.random() < .5 ? 'left' : 'right') : 'top';
   const rareLowerRoute = Math.random() < .05; const routeBottom = rareLowerRoute ? rect.height - 145 : Math.max(165, rect.height * .58);
   let x, y, exitX, exitY;
-  const speed = (36 + Math.random() * 30 + Math.min(gameTime(now) / 1500, 30)) * 1.25 * (type.key === 'small' ? 1.28 : 1);
+  const speed = (36 + Math.random() * 30 + Math.min(gameTime(now) / 1500, 30)) * 1.25 * (isDoubleEvent(now) ? 1.3 : 1) * (type.key === 'small' ? 1.28 : 1);
   if (entry === 'left' || entry === 'right') {
     x = entry === 'left' ? -type.size : rect.width + type.size;
     y = 88 + Math.random() * Math.max(30, routeBottom - 150);
@@ -116,24 +120,26 @@ function spawnHeartPair(x, y) {
   setTimeout(() => mini.remove(), 700);
 }
 
+function accelerateSpawnAfterHit(now) { state.spawnAt = Math.min(state.spawnAt, now + 120); }
+
 function hitTarget(target, projectile, now) {
   if (!target.alive || target.invulnerable) return;
   const hitX = projectile.x ?? target.x + target.size / 2; const hitY = projectile.y ?? target.y + target.size / 2;
   target.alive = false; projectile.alive = false;
   if (target.type.key === 'trap') {
     target.alive = true; target.invulnerable = true;
-    state.score = Math.max(0, state.score + target.type.points);
+    state.score = Math.max(0, state.score + target.type.points * scoreMultiplier(now));
     target.image.src = trapRunFrames[0];
     target.fleeing = { startedAt: now, fromX: target.x, fromY: target.y, toX: playfield.clientWidth + target.size * 2, toY: -target.size * 2, duration: 2570 };
     target.el.classList.add('fleeing'); target.el.style.zIndex = '0'; projectile.el.remove(); return;
   }
   if (projectile.weapon.hit === 'risan') {
-    state.hits += 1; state.score += target.type.points;
+    state.hits += 1; state.score += target.type.points * scoreMultiplier(now); accelerateSpawnAfterHit(now);
     spawnHeartPair(hitX, hitY); target.el.remove(); projectile.el.remove(); return;
   }
   projectile.el.remove();
   state.hits += 1;
-  state.score += target.type.points;
+  state.score += target.type.points * scoreMultiplier(now); accelerateSpawnAfterHit(now);
   if (projectile.weapon.hit === 'rock') spawnImpact(hitX, hitY);
   if (projectile.weapon.hit === 'manhole') { target.image.src = assets.manholeHitPerson; target.el.classList.add('manholed'); target.falling = true; target.vx = 0; target.vy = 200; setTimeout(() => target.el.remove(), 1800); }
   else if (projectile.weapon.hit === 'poo') { target.el.classList.add('pooed'); target.lingerUntil = now + 660; }
@@ -144,7 +150,7 @@ function hitTarget(target, projectile, now) {
 function tick(now) {
   if (!state.active || state.paused) return;
   const elapsed = gameTime(now); if (elapsed >= 90000) return finishGame();
-  const spawnGap = Math.max(575, 1095 - elapsed / 142.5); if (now >= state.spawnAt) { spawnTarget(now); state.spawnAt = now + spawnGap; }
+  const baseSpawnGap = Math.max(575, 1095 - elapsed / 142.5); const spawnGap = baseSpawnGap / (isDoubleEvent(now) ? 1.6 : 1); if (now >= state.spawnAt) { spawnTarget(now); state.spawnAt = now + spawnGap; }
   const rect = playfield.getBoundingClientRect();
   state.targets = state.targets.filter((t) => {
     if (!t.alive && !t.falling && !t.fleeing && !t.lingerUntil) return false;
@@ -183,7 +189,7 @@ function tick(now) {
       const dx = (t.x + t.size / 2) - (other.x + other.size / 2);
       const dy = (t.y + t.size / 2) - (other.y + other.size / 2);
       const distance = Math.hypot(dx, dy) || 1;
-      const personalSpace = (t.size + other.size) * .72;
+      const personalSpace = (t.size + other.size) * (isDoubleEvent(now) ? .65 : .72);
       if (distance >= personalSpace) return;
       const push = Math.min(2.6, (1 - distance / personalSpace) * 2.6);
       avoidX += (dx / distance) * push;
