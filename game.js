@@ -14,11 +14,11 @@ const weapons = [
   { name: '리산성', asset: assets.projectileRisangseong, hit: 'risan' },
 ];
 const targetTypes = [
-  { key: 'normal', size: 104, points: 10, weight: 48 },
-  { key: 'small', size: 104, points: 30, weight: 22 },
-  { key: 'big', size: 104, points: 5, weight: 15 },
-  { key: 'trap', size: 104, points: -50, weight: 6 },
-  { key: 'trickster', size: 104, points: 70, weight: 9 },
+  { key: 'normal', size: 86, points: 10, weight: 48 },
+  { key: 'small', size: 86, points: 30, weight: 22 },
+  { key: 'big', size: 86, points: 5, weight: 15 },
+  { key: 'trap', size: 86, points: -50, weight: 6 },
+  { key: 'trickster', size: 86, points: 70, weight: 9 },
 ];
 const targetAssets = [
   { src: assets.target1 },
