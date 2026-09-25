@@ -117,7 +117,7 @@ function hitTarget(target, projectile, now) {
   projectile.el.remove();
   state.hits += 1;
   state.score += target.type.points;
-  if (projectile.weapon.hit !== 'poo') spawnImpact(hitX, hitY);
+  if (projectile.weapon.hit === 'rock') spawnImpact(hitX, hitY);
   if (projectile.weapon.hit === 'manhole') { target.image.src = assets.manholeHitPerson; target.el.classList.add('manholed'); target.falling = true; target.vx = 0; target.vy = 200; setTimeout(() => target.el.remove(), 1800); }
   else if (projectile.weapon.hit === 'poo') { target.el.classList.add('pooed'); target.lingerUntil = now + 330; }
   else if (projectile.weapon.hit === 'pig') { target.image.src = assets.pigHitPork; target.el.classList.add('pigged'); target.lingerUntil = now + 360; }
@@ -169,7 +169,7 @@ function tick(now) {
 function finishGame() { state.active = false; cancelAnimationFrame(state.raf); targetLayer.replaceChildren(); projectileLayer.replaceChildren(); saveScore(state.score); $('#final-score').textContent = state.score; $('#hit-count').textContent = state.hits; showScreen('result'); }
 function rankings() { return JSON.parse(localStorage.getItem('hit-ris-ranking') || '[]'); }
 function saveScore(score) { const list = [...rankings(), { score, date: new Date().toLocaleDateString('ko-KR') }].sort((a, b) => b.score - a.score).slice(0, 10); localStorage.setItem('hit-ris-ranking', JSON.stringify(list)); }
-function showRanking() { const list = rankings(); const target = $('#ranking-list'); target.replaceChildren(); if (!list.length) { const empty = document.createElement('li'); empty.className = 'empty'; empty.textContent = '아직 기록이 없습니다.'; target.append(empty); } else list.forEach((record) => { const item = document.createElement('li'); item.textContent = `${record.score.toLocaleString()}점`; const small = document.createElement('small'); small.textContent = `  ·  ${record.date}`; item.append(small); target.append(item); }); showScreen('ranking'); }
+function showRanking() { const list = rankings().slice(0, 10); const target = $('#ranking-list'); target.replaceChildren(); if (!list.length) { const empty = document.createElement('li'); empty.className = 'empty'; empty.textContent = '아직 기록이 없습니다.'; target.append(empty); } else list.forEach((record) => { const item = document.createElement('li'); item.textContent = `${record.score.toLocaleString()}점`; const small = document.createElement('small'); small.textContent = `  ·  ${record.date}`; item.append(small); target.append(item); }); showScreen('ranking'); }
 function togglePause() { if (!state.active) return; state.paused = true; state.pauseStartedAt = performance.now(); cancelAnimationFrame(state.raf); pauseModal.classList.add('open'); pauseModal.setAttribute('aria-hidden', 'false'); }
 function resumeGame() { if (!state.paused) return; state.pausedTotal += performance.now() - state.pauseStartedAt; state.paused = false; pauseModal.classList.remove('open'); pauseModal.setAttribute('aria-hidden', 'true'); state.raf = requestAnimationFrame(tick); }
 
@@ -179,3 +179,9 @@ const gameAmbient = document.querySelector('#game-screen .ambient-text-layer');
 gameAmbient.innerHTML += gameAmbient.innerHTML;
 const ambientMarkup = gameAmbient.innerHTML;
 document.querySelectorAll('.shared-ambient').forEach((node) => { node.innerHTML = ambientMarkup; });
+document.querySelectorAll('.marquee-row').forEach((row) => {
+  const rightward = Math.random() < .48;
+  row.classList.toggle('right', rightward); row.classList.toggle('left', !rightward);
+  row.style.setProperty('--speed', `${(5.2 + Math.random() * 7.6).toFixed(2)}s`);
+  row.style.transform = `rotate(${(Math.random() * 5 - 2.5).toFixed(2)}deg) scale(${(1.1 + Math.random() * .12).toFixed(2)})`;
+});
