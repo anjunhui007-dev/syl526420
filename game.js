@@ -24,6 +24,7 @@ const targetAssets = [
   { src: assets.targetNew0 }, { src: assets.targetNew1 }, { src: assets.targetNew2 }, { src: assets.targetNew3 },
   { src: assets.targetNew4 }, { src: assets.targetNew5 }, { src: assets.targetNew6 }, { src: assets.targetNew7 },
 ];
+const trapRunFrames = [assets.trapRun0, assets.trapRun1, assets.trapRun2];
 const state = { active: false, paused: false, startedAt: 0, pauseStartedAt: 0, pausedTotal: 0, score: 0, hits: 0, targets: [], projectiles: [], spawnAt: 0, raf: null, loadedWeapon: null };
 let nextId = 1;
 
@@ -90,6 +91,7 @@ function hitTarget(target, projectile, now) {
   if (target.type.key === 'trap') {
     target.alive = true; target.invulnerable = true;
     state.score = Math.max(0, state.score + target.type.points);
+    target.image.src = trapRunFrames[0];
     target.fleeing = { startedAt: now, fromX: target.x, fromY: target.y, toX: playfield.clientWidth + target.size * 2, toY: -target.size * 2, duration: 520 };
     target.el.classList.add('fleeing'); return;
   }
@@ -98,7 +100,7 @@ function hitTarget(target, projectile, now) {
   const impact = document.createElement('div'); impact.className = 'impact'; impact.style.left = `${target.x}px`; impact.style.top = `${target.y}px`; projectileLayer.append(impact); setTimeout(() => impact.remove(), 320);
   if (projectile.weapon.hit === 'manhole') { target.image.src = assets.targetManhole; target.el.classList.add('manholed'); target.falling = true; target.vx = 0; target.vy = 650; setTimeout(() => target.el.remove(), 650); }
   else if (projectile.weapon.hit === 'poo') { target.el.classList.add('pooed'); target.lingerUntil = now + 330; }
-  else if (projectile.weapon.hit === 'pig') { target.image.src = assets.targetHitPig; target.el.classList.add('pigged'); target.lingerUntil = now + 360; }
+  else if (projectile.weapon.hit === 'pig') { target.image.src = assets.pigHitPork; target.el.classList.add('pigged'); target.lingerUntil = now + 360; }
   else { target.el.remove(); }
 }
 
@@ -111,6 +113,7 @@ function tick(now) {
     if (!t.alive && !t.falling && !t.fleeing && !t.lingerUntil) return false;
     if (t.fleeing) {
       const p = Math.min(1, (now - t.fleeing.startedAt) / t.fleeing.duration);
+      t.image.src = trapRunFrames[Math.floor((now - t.fleeing.startedAt) / 85) % trapRunFrames.length];
       const ease = 1 - Math.pow(1 - p, 3);
       t.x = t.fleeing.fromX + (t.fleeing.toX - t.fleeing.fromX) * ease;
       t.y = t.fleeing.fromY + (t.fleeing.toY - t.fleeing.fromY) * ease;
