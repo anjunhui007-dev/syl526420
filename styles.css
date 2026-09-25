@@ -19,6 +19,7 @@ h1 span { color: #ffdc55; -webkit-text-stroke: 2px #fff; }
 .nickname-form div { display: flex; gap: 7px; }
 .nickname-form input { min-width: 0; flex: 1; border: 2px solid #7770b8; border-radius: 11px; background: rgba(16,14,46,.88); color: #fff; padding: 10px 11px; font: inherit; font-size: .86rem; }
 .nickname-form button { border-radius: 11px; background: #665aad; color: #fff; padding: 0 13px; font-size: .82rem; }
+.about-button { display: block; margin: 8px auto 0; }
 .primary-button, .secondary-button, .text-button, .icon-button { border-radius: 18px; transition: transform .12s, filter .12s; }
 .primary-button:hover, .secondary-button:hover, .text-button:hover, .icon-button:hover { filter: brightness(1.12); transform: translateY(-2px); }
 .primary-button:active, .secondary-button:active, .text-button:active, .icon-button:active { transform: translateY(1px) scale(.98); }
@@ -83,6 +84,9 @@ h1 span { color: #ffdc55; -webkit-text-stroke: 2px #fff; }
 .ranking-screen { background: #030304; isolation: isolate; }
 .result-card, .ranking-card, .modal-card { width: min(385px, 92vw); border: 3px solid rgba(255,255,255,.7); border-radius: 28px; background: #24204d; padding: 30px 25px; text-align: center; box-shadow: 0 15px 0 rgba(0,0,0,.2); }
 .ranking-card { position: relative; z-index: 2; }
+.about-card p { margin: 11px 0; color: #ddd9ff; line-height: 1.45; }
+.about-card p b { color: #ffdf63; }
+.about-card .primary-button { margin-top: 16px; }
 h2 { margin-bottom: 18px; font-size: 2rem; }
 .result-score { display: grid; gap: 2px; margin: 20px 0 14px; padding: 18px; border-radius: 19px; background: #161534; }
 .result-score span, .result-stats { color: #cac5ef; font-size: .82rem; font-weight: 800; }
