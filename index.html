@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#10152e" />
     <title>HIT 리산성!</title>
-    <link rel="stylesheet" href="styles.css?v=10" />
+    <link rel="stylesheet" href="styles.css?v=11" />
   </head>
   <body>
     <main class="app-shell">
@@ -25,6 +25,13 @@
           <div class="home-actions">
             <button id="start-button" class="primary-button">게임 시작</button>
             <button id="ranking-button" class="secondary-button">랭킹 확인</button>
+          </div>
+          <div class="nickname-form">
+            <label for="nickname-input">랭킹 닉네임</label>
+            <div>
+              <input id="nickname-input" maxlength="12" placeholder="닉네임 입력" autocomplete="nickname" />
+              <button id="nickname-save-button" type="button">설정</button>
+            </div>
           </div>
         </div>
       </section>
@@ -90,6 +97,6 @@
       </div>
     </div>
     <script src="assets.js?v=5"></script>
-    <script src="game.js?v=10"></script>
+    <script src="game.js?v=11"></script>
   </body>
 </html>
