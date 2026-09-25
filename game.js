@@ -32,7 +32,12 @@ let rankingRefreshTimer = null;
 function showScreen(name) { Object.entries(screens).forEach(([key, node]) => node.classList.toggle('active', key === name)); if (name !== 'ranking' && rankingRefreshTimer) { clearInterval(rankingRefreshTimer); rankingRefreshTimer = null; } }
 function random(array) { return array[Math.floor(Math.random() * array.length)]; }
 function image(src, className = '') { const node = document.createElement('img'); node.src = src; node.className = className; node.alt = ''; node.draggable = false; return node; }
-function updateLoadedProjectile() { $('#loaded-projectile').replaceChildren(image(state.loadedWeapon.asset)); }
+function refreshLoadedProjectileCooldown() { $('#loaded-projectile').classList.toggle('cooldown', performance.now() < state.throwReadyAt); }
+function updateLoadedProjectile() { $('#loaded-projectile').replaceChildren(image(state.loadedWeapon.asset)); refreshLoadedProjectileCooldown(); }
+function setThrowCooldown(duration, now = performance.now()) {
+  state.throwReadyAt = Math.max(state.throwReadyAt, now + duration); refreshLoadedProjectileCooldown();
+  setTimeout(() => { if (performance.now() >= state.throwReadyAt) refreshLoadedProjectileCooldown(); }, duration + 24);
+}
 function projectileOverlapsTarget(target, centerX, centerY) {
   const half = 48;
   return centerX + half > target.x && centerX - half < target.x + target.size && centerY + half > target.y && centerY - half < target.y + target.size;
@@ -99,7 +104,7 @@ function spawnTarget(now) {
 function throwObject(event) {
   if (!state.active || state.paused || event.target.closest('button')) return;
   const now = performance.now(); if (now < state.throwReadyAt) return;
-  state.throwReadyAt = now + 500;
+  setThrowCooldown(200, now);
   const rect = playfield.getBoundingClientRect(); const weapon = state.loadedWeapon;
   const endX = event.clientX - rect.left; const endY = event.clientY - rect.top; const startX = rect.width / 2; const startY = rect.height - 35;
   const el = document.createElement('div'); el.className = 'projectile'; el.append(image(weapon.asset)); projectileLayer.append(el);
@@ -132,7 +137,7 @@ function hitTarget(target, projectile, now) {
   if (target.type.key === 'trap') {
     target.alive = true; target.invulnerable = true;
     state.score = Math.max(0, state.score + target.type.points * scoreMultiplier(now));
-    state.throwReadyAt = Math.max(state.throwReadyAt, now + 1000);
+    setThrowCooldown(1000, now);
     target.image.src = trapRunFrames[0];
     target.fleeing = { startedAt: now, fromX: target.x, fromY: target.y, toX: playfield.clientWidth + target.size * 2, toY: -target.size * 2, duration: 2570 };
     target.el.classList.add('fleeing'); target.el.style.zIndex = '0'; projectile.el.remove(); return;
@@ -235,8 +240,7 @@ function saveNickname() {
 function startGameFromHome() {
   const input = $('#nickname-input'); const value = input.value.trim().replace(/\s+/g, ' ').slice(0, 12);
   if (value === '리산성') {
-    alert('고등부 리더형에 처하겠다');
-    localStorage.removeItem('hit-ris-nickname'); input.value = ''; setNicknameWarning('닉네임을 바꾸고 다시 작성해라.'); input.focus(); return;
+    localStorage.removeItem('hit-ris-nickname'); input.value = ''; setNicknameWarning('닉네임을 바꾸고 다시 작성해라.'); return;
   }
   resetGame();
 }
