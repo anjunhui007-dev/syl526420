@@ -281,7 +281,29 @@ async function rankingRequest(method = 'GET', record = null) {
   }
   return rankingRequestWithXhr(method, record);
 }
-async function fetchSharedRankings() { return normalizeRankings(await rankingRequest()); }
+const RANKING_SHEET_JSONP = 'https://docs.google.com/spreadsheets/d/1JSjGEXPYtAz7HQSR9vw7sa9GGo-8A05Kp0W75XppxFA/gviz/tq';
+function fetchSheetRankingsJsonp() {
+  return new Promise((resolve, reject) => {
+    const callback = 'hitRanking' + Date.now() + Math.floor(Math.random() * 10000);
+    const script = document.createElement('script');
+    const cleanUp = () => { script.remove(); delete window[callback]; };
+    const timeout = setTimeout(() => { cleanUp(); reject(new Error('ranking request timed out')); }, 7000);
+    window[callback] = (data) => {
+      clearTimeout(timeout); cleanUp();
+      if (data.status !== 'ok') return reject(new Error('sheet query failed'));
+      const rows = (data.table && data.table.rows) || [];
+      resolve(rows.map((row) => ({
+        nickname: String(row.c && row.c[0] && row.c[0].v || '익명'),
+        date: String(row.c && row.c[1] && (row.c[1].f || row.c[1].v) || ''),
+        score: Number(row.c && row.c[2] && row.c[2].v) || 0,
+      })));
+    };
+    script.onerror = () => { clearTimeout(timeout); cleanUp(); reject(new Error('ranking request failed')); };
+    script.src = RANKING_SHEET_JSONP + '?tqx=out:json%3BresponseHandler:' + callback + '&_=' + Date.now();
+    document.head.append(script);
+  });
+}
+async function fetchSharedRankings() { return normalizeRankings(await fetchSheetRankingsJsonp()); }
 function renderRankingLoading() { const target = $('#ranking-list'); target.replaceChildren(); const item = document.createElement('li'); item.className = 'empty'; item.textContent = '랭킹 불러오는 중…'; target.append(item); }
 async function refreshSharedRanking() {
   try { renderRankings(await fetchSharedRankings()); } catch (_) { renderRankingLoadError(); }
