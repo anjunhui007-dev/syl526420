@@ -98,7 +98,7 @@ function hitTarget(target, projectile, now) {
   state.hits += 1;
   state.score += target.type.points;
   const impact = document.createElement('div'); impact.className = 'impact'; impact.style.left = `${target.x}px`; impact.style.top = `${target.y}px`; projectileLayer.append(impact); setTimeout(() => impact.remove(), 320);
-  if (projectile.weapon.hit === 'manhole') { target.image.src = assets.targetManhole; target.el.classList.add('manholed'); target.falling = true; target.vx = 0; target.vy = 650; setTimeout(() => target.el.remove(), 650); }
+  if (projectile.weapon.hit === 'manhole') { target.image.src = assets.manholeHitPerson; target.el.classList.add('manholed'); target.falling = true; target.vx = 0; target.vy = 650; setTimeout(() => target.el.remove(), 650); }
   else if (projectile.weapon.hit === 'poo') { target.el.classList.add('pooed'); target.lingerUntil = now + 330; }
   else if (projectile.weapon.hit === 'pig') { target.image.src = assets.pigHitPork; target.el.classList.add('pigged'); target.lingerUntil = now + 360; }
   else { target.el.remove(); }
