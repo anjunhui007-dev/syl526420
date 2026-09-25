@@ -25,18 +25,20 @@ const targetAssets = [
   { src: assets.targetNew4 }, { src: assets.targetNew5 }, { src: assets.targetNew6 }, { src: assets.targetNew7 },
 ];
 const trapRunFrames = [assets.trapRun0, assets.trapRun1, assets.trapRun2];
-const state = { active: false, paused: false, startedAt: 0, pauseStartedAt: 0, pausedTotal: 0, score: 0, hits: 0, targets: [], projectiles: [], spawnAt: 0, throwReadyAt: 0, raf: null, loadedWeapon: null };
+const state = { active: false, paused: false, startedAt: 0, pauseStartedAt: 0, pausedTotal: 0, score: 0, hits: 0, targets: [], projectiles: [], spawnAt: 0, throwReadyAt: 0, trapCooldownUntil: 0, raf: null, loadedWeapon: null };
 let nextId = 1;
 
 let rankingRefreshTimer = null;
 function showScreen(name) { Object.entries(screens).forEach(([key, node]) => node.classList.toggle('active', key === name)); if (name !== 'ranking' && rankingRefreshTimer) { clearInterval(rankingRefreshTimer); rankingRefreshTimer = null; } }
 function random(array) { return array[Math.floor(Math.random() * array.length)]; }
 function image(src, className = '') { const node = document.createElement('img'); node.src = src; node.className = className; node.alt = ''; node.draggable = false; return node; }
-function refreshLoadedProjectileCooldown() { $('#loaded-projectile').classList.toggle('cooldown', performance.now() < state.throwReadyAt); }
+function refreshLoadedProjectileCooldown() { $('#loaded-projectile').classList.toggle('cooldown', performance.now() < state.trapCooldownUntil); }
 function updateLoadedProjectile() { $('#loaded-projectile').replaceChildren(image(state.loadedWeapon.asset)); refreshLoadedProjectileCooldown(); }
-function setThrowCooldown(duration, now = performance.now()) {
-  state.throwReadyAt = Math.max(state.throwReadyAt, now + duration); refreshLoadedProjectileCooldown();
-  setTimeout(() => { if (performance.now() >= state.throwReadyAt) refreshLoadedProjectileCooldown(); }, duration + 24);
+function setThrowCooldown(duration, now = performance.now(), isTrapPenalty = false) {
+  state.throwReadyAt = Math.max(state.throwReadyAt, now + duration);
+  if (isTrapPenalty) state.trapCooldownUntil = Math.max(state.trapCooldownUntil, now + duration);
+  refreshLoadedProjectileCooldown();
+  setTimeout(() => refreshLoadedProjectileCooldown(), duration + 24);
 }
 function projectileOverlapsTarget(target, centerX, centerY) {
   const half = 48;
@@ -57,7 +59,7 @@ function updateHud(now) { $('#score-value').textContent = state.score; $('#timer
 
 function resetGame() {
   cancelAnimationFrame(state.raf); targetLayer.replaceChildren(); projectileLayer.replaceChildren();
-  Object.assign(state, { active: true, paused: false, startedAt: performance.now(), pauseStartedAt: 0, pausedTotal: 0, score: 0, hits: 0, targets: [], projectiles: [], spawnAt: 0, throwReadyAt: 0, loadedWeapon: random(weapons) });
+  Object.assign(state, { active: true, paused: false, startedAt: performance.now(), pauseStartedAt: 0, pausedTotal: 0, score: 0, hits: 0, targets: [], projectiles: [], spawnAt: 0, throwReadyAt: 0, trapCooldownUntil: 0, loadedWeapon: random(weapons) });
   pauseModal.classList.remove('open'); pauseModal.setAttribute('aria-hidden', 'true');
   updateLoadedProjectile(); showScreen('game'); state.raf = requestAnimationFrame(tick);
 }
@@ -137,7 +139,7 @@ function hitTarget(target, projectile, now) {
   if (target.type.key === 'trap') {
     target.alive = true; target.invulnerable = true;
     state.score = Math.max(0, state.score + target.type.points * scoreMultiplier(now));
-    setThrowCooldown(1000, now);
+    setThrowCooldown(1000, now, true);
     target.image.src = trapRunFrames[0];
     target.fleeing = { startedAt: now, fromX: target.x, fromY: target.y, toX: playfield.clientWidth + target.size * 2, toY: -target.size * 2, duration: 2570 };
     target.el.classList.add('fleeing'); target.el.style.zIndex = '0'; projectile.el.remove(); return;
@@ -255,18 +257,26 @@ function renderRankings(list) {
   list.forEach((record) => { const item = document.createElement('li'); const name = document.createElement('strong'); name.textContent = record.nickname || '익명'; const date = document.createElement('small'); date.textContent = record.date; const score = document.createElement('b'); score.textContent = record.score.toLocaleString() + '점'; item.append(name, date, score); });
 }
 function renderRankingLoadError() { const target = $('#ranking-list'); target.replaceChildren(); const item = document.createElement('li'); item.className = 'empty'; item.textContent = '스프레드시트 랭킹을 불러오지 못했습니다.'; target.append(item); }
-async function fetchSharedRankings() {
-  const response = await fetch(RANKING_API, { cache: 'no-store' });
-  if (!response.ok) throw new Error('ranking fetch failed');
-  return normalizeRankings(await response.json());
+function rankingRequest(method = 'GET', record = null) {
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open(method, RANKING_API + (method === 'GET' ? '?_=' + Date.now() : ''), true);
+    if (method === 'POST') request.setRequestHeader('Content-Type', 'text/plain;charset=utf-8');
+    request.onload = () => {
+      if (request.status < 200 || request.status >= 300) return reject(new Error('ranking request failed'));
+      try { resolve(JSON.parse(request.responseText)); } catch (_) { reject(new Error('ranking response was not JSON')); }
+    };
+    request.onerror = () => reject(new Error('ranking request failed'));
+    request.send(record ? JSON.stringify(record) : null);
+  });
 }
+async function fetchSharedRankings() { return normalizeRankings(await rankingRequest()); }
 async function refreshSharedRanking() {
   try { renderRankings(await fetchSharedRankings()); } catch (_) { renderRankingLoadError(); }
 }
 function saveScore(score) {
   const record = { nickname: playerNickname(), score, date: new Date().toLocaleDateString('ko-KR') };
-  fetch(RANKING_API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(record) })
-    .then(() => { if (screens.ranking.classList.contains('active')) refreshSharedRanking(); }).catch(() => {});
+  rankingRequest('POST', record).then(() => { if (screens.ranking.classList.contains('active')) refreshSharedRanking(); }).catch(() => {});
 }
 function showRanking() {
   showScreen('ranking'); refreshSharedRanking();
