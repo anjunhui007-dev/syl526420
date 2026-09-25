@@ -96,7 +96,7 @@ function throwObject(event) {
   const rect = playfield.getBoundingClientRect(); const weapon = state.loadedWeapon;
   const endX = event.clientX - rect.left; const endY = event.clientY - rect.top; const startX = rect.width / 2; const startY = rect.height - 35;
   const el = document.createElement('div'); el.className = 'projectile'; el.append(image(weapon.asset)); projectileLayer.append(el);
-  state.projectiles.push({ id: nextId++, el, weapon, startX, startY, endX, endY, startAt: performance.now(), duration: 570, alive: true });
+  state.projectiles.push({ id: nextId++, el, weapon, startX, startY, endX, endY, startAt: performance.now(), duration: 438, alive: true });
   state.loadedWeapon = random(weapons); updateLoadedProjectile();
 }
 
@@ -212,11 +212,40 @@ function tick(now) {
 }
 
 function finishGame() { state.active = false; cancelAnimationFrame(state.raf); targetLayer.replaceChildren(); projectileLayer.replaceChildren(); saveScore(state.score); $('#final-score').textContent = state.score; $('#hit-count').textContent = state.hits; showScreen('result'); }
+const RANKING_API = 'https://script.google.com/macros/s/AKfycbxGTeWf9_IKHCCghNkgwBlG36h2s5MdDtHIezJEZ-SGTKAia9IauXz551m6-kQwhhKe/exec';
+const RANKING_STORAGE_VERSION = 'shared-v1';
+if (localStorage.getItem('hit-ris-ranking-version') !== RANKING_STORAGE_VERSION) {
+  localStorage.removeItem('hit-ris-ranking');
+  localStorage.setItem('hit-ris-ranking-version', RANKING_STORAGE_VERSION);
+}
 function rankings() { return JSON.parse(localStorage.getItem('hit-ris-ranking') || '[]'); }
 function playerNickname() { return localStorage.getItem('hit-ris-nickname') || '익명'; }
 function saveNickname() { const value = $('#nickname-input').value.trim().replace(/\s+/g, ' ').slice(0, 12); if (value) localStorage.setItem('hit-ris-nickname', value); $('#nickname-input').value = playerNickname(); }
-function saveScore(score) { const list = [...rankings(), { nickname: playerNickname(), score, date: new Date().toLocaleDateString('ko-KR') }].sort((a, b) => b.score - a.score).slice(0, 10); localStorage.setItem('hit-ris-ranking', JSON.stringify(list)); }
-function showRanking() { const list = rankings().slice(0, 10); const target = $('#ranking-list'); target.replaceChildren(); if (!list.length) { const empty = document.createElement('li'); empty.className = 'empty'; empty.textContent = '아직 기록이 없습니다.'; target.append(empty); } else list.forEach((record) => { const item = document.createElement('li'); const name = document.createElement('strong'); name.textContent = record.nickname || '익명'; const date = document.createElement('small'); date.textContent = record.date; const score = document.createElement('b'); score.textContent = `${record.score.toLocaleString()}점`; item.append(name, date, score); target.append(item); }); showScreen('ranking'); }
+function normalizeRankings(data) {
+  const list = Array.isArray(data) ? data : (data.rankings || data.records || data.data || []);
+  return list.map((record) => ({ nickname: String(record.nickname || record.name || '익명').slice(0, 12), date: String(record.date || ''), score: Number(record.score) || 0 }))
+    .sort((a, b) => b.score - a.score).slice(0, 10);
+}
+function renderRankings(list) {
+  const target = $('#ranking-list'); target.replaceChildren();
+  if (!list.length) { const empty = document.createElement('li'); empty.className = 'empty'; empty.textContent = '아직 기록이 없습니다.'; target.append(empty); return; }
+  list.forEach((record) => { const item = document.createElement('li'); const name = document.createElement('strong'); name.textContent = record.nickname || '익명'; const date = document.createElement('small'); date.textContent = record.date; const score = document.createElement('b'); score.textContent = record.score.toLocaleString() + '점'; item.append(name, date, score); target.append(item); });
+}
+async function fetchSharedRankings() {
+  const response = await fetch(RANKING_API, { cache: 'no-store' });
+  if (!response.ok) throw new Error('ranking fetch failed');
+  return normalizeRankings(await response.json());
+}
+function saveScore(score) {
+  const record = { nickname: playerNickname(), score, date: new Date().toLocaleDateString('ko-KR') };
+  const list = [...rankings(), record].sort((a, b) => b.score - a.score).slice(0, 10);
+  localStorage.setItem('hit-ris-ranking', JSON.stringify(list));
+  fetch(RANKING_API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(record) }).catch(() => {});
+}
+async function showRanking() {
+  showScreen('ranking'); renderRankings(rankings().slice(0, 10));
+  try { renderRankings(await fetchSharedRankings()); } catch (_) { /* offline fallback: local ranking stays visible */ }
+}
 function togglePause() { if (!state.active) return; state.paused = true; state.pauseStartedAt = performance.now(); cancelAnimationFrame(state.raf); pauseModal.classList.add('open'); pauseModal.setAttribute('aria-hidden', 'false'); }
 function resumeGame() { if (!state.paused) return; state.pausedTotal += performance.now() - state.pauseStartedAt; state.paused = false; pauseModal.classList.remove('open'); pauseModal.setAttribute('aria-hidden', 'true'); state.raf = requestAnimationFrame(tick); }
 
