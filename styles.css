@@ -101,7 +101,7 @@ h2 { margin-bottom: 18px; font-size: 2rem; }
 .ranking-list li:nth-child(2) .rank-badge { background: #9da4b4; color: #18202a; }
 .ranking-list li:nth-child(3) .rank-badge { background: #a96539; color: #fff1de; }
 .ranking-list li strong { justify-self: start; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ranking-list li small { justify-self: center; transform: translateX(-21px); text-align: center; white-space: nowrap; color: #bdb8dd; font-size: .7rem; }
+.ranking-list li small { justify-self: center; transform: translateX(-51px); text-align: center; white-space: nowrap; color: #bdb8dd; font-size: .7rem; }
 .ranking-list li b { justify-self: end; text-align: right; color: #ffdf63; white-space: nowrap; }
 .ranking-list li::marker { color: #ffdf63; }
 .ranking-list .empty { color: #bdb8dd; text-align: center; list-style: none; }
