@@ -109,3 +109,5 @@ h2 { margin-bottom: 18px; font-size: 2rem; }
 .double-event-label { display: block; min-height: 1.1em; margin-top: 2px; color: #ffdf4e !important; font-size: .72rem !important; font-weight: 1000 !important; letter-spacing: .06em !important; text-shadow: 0 1px 0 #6a2600; }
 
 .nickname-warning { min-height: 1.2em; margin: 5px 4px 0; color: #ff9b95; font-size: .75rem; font-weight: 900; text-align: center; }
+
+.loaded-projectile.cooldown img { filter: sepia(1) saturate(9) hue-rotate(315deg) brightness(1.06) drop-shadow(0 6px 0 rgba(91,0,0,.48)); }
