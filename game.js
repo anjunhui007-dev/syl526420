@@ -57,7 +57,7 @@ function spawnTarget(now) {
   const entry = edgeRoll < .72 ? (Math.random() < .5 ? 'left' : 'right') : 'top';
   const rareLowerRoute = Math.random() < .05; const routeBottom = rareLowerRoute ? rect.height - 145 : Math.max(165, rect.height * .58);
   let x, y, exitX, exitY;
-  const speed = (36 + Math.random() * 30 + Math.min(gameTime(now) / 1500, 30)) * (type.key === 'small' ? 1.28 : 1);
+  const speed = (36 + Math.random() * 30 + Math.min(gameTime(now) / 1500, 30)) * 1.25 * (type.key === 'small' ? 1.28 : 1);
   if (entry === 'left' || entry === 'right') {
     x = entry === 'left' ? -type.size : rect.width + type.size;
     y = 88 + Math.random() * Math.max(30, routeBottom - 150);
@@ -160,8 +160,15 @@ function tick(now) {
         t.vx = ((t.waypoint.exitX - t.x) / outDistance) * speed; t.vy = ((t.waypoint.exitY - t.y) / outDistance) * speed;
       }
     }
-    if (t.type.key === 'trickster' && t.alive && (!t.waypoint || t.waypoint.reached) && now >= t.behaviorAt) { t.vx = (Math.random() * 2 - 1) * 190; t.vy = (Math.random() * 2 - 1) * 170; t.behaviorAt = now + 180 + Math.random() * 340; }
-    t.x += t.vx / 60; t.y += t.vy / 60; t.el.style.transform = `translate(${t.x}px, ${t.y}px) rotate(${t.type.key === 'trickster' ? Math.sin(now / 65) * 14 : 0}deg)`;
+    if (t.type.key === 'trickster' && t.alive && (!t.waypoint || t.waypoint.reached) && now >= t.behaviorAt) {
+      const speed = Math.max(120, Math.hypot(t.vx, t.vy)) * 1.7;
+      const turn = (Math.random() < .5 ? -1 : 1) * (Math.PI * (.32 + Math.random() * .42));
+      const direction = Math.atan2(t.vy, t.vx) + turn;
+      t.vx = Math.cos(direction) * speed; t.vy = Math.sin(direction) * speed; t.behaviorAt = now + 300 + Math.random() * 520;
+    }
+    t.x += t.vx / 60; t.y += t.vy / 60;
+    const wobbleX = Math.sin(now / 92 + t.id * 1.7) * 2.2; const wobbleY = Math.cos(now / 118 + t.id * 1.3) * 2.6;
+    t.el.style.transform = `translate(${t.x + wobbleX}px, ${t.y + wobbleY}px) rotate(${t.type.key === 'trickster' ? Math.sin(now / 65) * 14 : Math.sin(now / 175 + t.id) * 2.5}deg)`;
     const gone = t.x < -t.size * 2 || t.x > rect.width + t.size * 2 || t.y < -t.size * 2 || t.y > rect.height + t.size * 2;
     if (gone) t.el.remove(); return !gone;
   });
@@ -183,12 +190,15 @@ function tick(now) {
 
 function finishGame() { state.active = false; cancelAnimationFrame(state.raf); targetLayer.replaceChildren(); projectileLayer.replaceChildren(); saveScore(state.score); $('#final-score').textContent = state.score; $('#hit-count').textContent = state.hits; showScreen('result'); }
 function rankings() { return JSON.parse(localStorage.getItem('hit-ris-ranking') || '[]'); }
-function saveScore(score) { const list = [...rankings(), { score, date: new Date().toLocaleDateString('ko-KR') }].sort((a, b) => b.score - a.score).slice(0, 10); localStorage.setItem('hit-ris-ranking', JSON.stringify(list)); }
-function showRanking() { const list = rankings().slice(0, 10); const target = $('#ranking-list'); target.replaceChildren(); if (!list.length) { const empty = document.createElement('li'); empty.className = 'empty'; empty.textContent = '아직 기록이 없습니다.'; target.append(empty); } else list.forEach((record) => { const item = document.createElement('li'); item.textContent = `${record.score.toLocaleString()}점`; const small = document.createElement('small'); small.textContent = `  ·  ${record.date}`; item.append(small); target.append(item); }); showScreen('ranking'); }
+function playerNickname() { return localStorage.getItem('hit-ris-nickname') || '익명'; }
+function saveNickname() { const value = $('#nickname-input').value.trim().replace(/\s+/g, ' ').slice(0, 12); if (value) localStorage.setItem('hit-ris-nickname', value); $('#nickname-input').value = playerNickname(); }
+function saveScore(score) { const list = [...rankings(), { nickname: playerNickname(), score, date: new Date().toLocaleDateString('ko-KR') }].sort((a, b) => b.score - a.score).slice(0, 10); localStorage.setItem('hit-ris-ranking', JSON.stringify(list)); }
+function showRanking() { const list = rankings().slice(0, 10); const target = $('#ranking-list'); target.replaceChildren(); if (!list.length) { const empty = document.createElement('li'); empty.className = 'empty'; empty.textContent = '아직 기록이 없습니다.'; target.append(empty); } else list.forEach((record) => { const item = document.createElement('li'); const name = document.createElement('strong'); name.textContent = record.nickname || '익명'; const date = document.createElement('small'); date.textContent = record.date; const score = document.createElement('b'); score.textContent = `${record.score.toLocaleString()}점`; item.append(name, date, score); target.append(item); }); showScreen('ranking'); }
 function togglePause() { if (!state.active) return; state.paused = true; state.pauseStartedAt = performance.now(); cancelAnimationFrame(state.raf); pauseModal.classList.add('open'); pauseModal.setAttribute('aria-hidden', 'false'); }
 function resumeGame() { if (!state.paused) return; state.pausedTotal += performance.now() - state.pauseStartedAt; state.paused = false; pauseModal.classList.remove('open'); pauseModal.setAttribute('aria-hidden', 'true'); state.raf = requestAnimationFrame(tick); }
 
 $('#start-button').addEventListener('click', resetGame); $('#retry-button').addEventListener('click', resetGame); $('#pause-button').addEventListener('click', togglePause); $('#resume-button').addEventListener('click', resumeGame); $('#restart-button').addEventListener('click', resetGame); $('#exit-button').addEventListener('click', () => { state.active = false; pauseModal.classList.remove('open'); showScreen('home'); }); $('#ranking-button').addEventListener('click', showRanking); $('#result-ranking-button').addEventListener('click', showRanking); $('#ranking-home-button').addEventListener('click', () => showScreen('home')); $('#result-home-button').addEventListener('click', () => showScreen('home')); playfield.addEventListener('pointerdown', throwObject);
+$('#nickname-save-button').addEventListener('click', saveNickname); $('#nickname-input').addEventListener('keydown', (event) => { if (event.key === 'Enter') saveNickname(); }); $('#nickname-input').value = playerNickname();
 document.querySelectorAll('[data-home-asset]').forEach((node) => node.append(image(assets[node.dataset.homeAsset])));
 const gameAmbient = document.querySelector('#game-screen .ambient-text-layer');
 gameAmbient.querySelectorAll('.marquee-row div').forEach((line) => {
