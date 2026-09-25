@@ -61,13 +61,13 @@ function spriteAlphaAt(src, size, localX, localY) {
   return mask.alpha[(pixelY * mask.width + pixelX) * 4 + 3] > 12;
 }
 function hitsTargetSilhouette(target, x, y) { return spriteAlphaAt(target.asset, target.size, x - target.x, y - target.y); }
-function projectileOverlapsTarget(target, projectile) {
-  const projectileSize = 96; const half = projectileSize / 2; const angle = 480 * Math.PI / 180; const cos = Math.cos(angle); const sin = Math.sin(angle);
-  const minX = Math.ceil(Math.max(target.x, projectile.endX - half)); const maxX = Math.floor(Math.min(target.x + target.size, projectile.endX + half));
-  const minY = Math.ceil(Math.max(target.y, projectile.endY - half)); const maxY = Math.floor(Math.min(target.y + target.size, projectile.endY + half));
+function projectileOverlapsTarget(target, projectile, centerX, centerY, rotation, scale) {
+  const projectileSize = 96 * scale; const half = projectileSize / 2; const angle = rotation * Math.PI / 180; const cos = Math.cos(angle); const sin = Math.sin(angle);
+  const minX = Math.ceil(Math.max(target.x, centerX - half)); const maxX = Math.floor(Math.min(target.x + target.size, centerX + half));
+  const minY = Math.ceil(Math.max(target.y, centerY - half)); const maxY = Math.floor(Math.min(target.y + target.size, centerY + half));
   for (let worldY = minY; worldY <= maxY; worldY += 1) for (let worldX = minX; worldX <= maxX; worldX += 1) {
     if (!hitsTargetSilhouette(target, worldX, worldY)) continue;
-    const dx = worldX - projectile.endX; const dy = worldY - projectile.endY;
+    const dx = worldX - centerX; const dy = worldY - centerY;
     const projectileX = cos * dx + sin * dy + half; const projectileY = -sin * dx + cos * dy + half;
     if (spriteAlphaAt(projectile.weapon.asset, projectileSize, projectileX, projectileY)) return true;
   }
@@ -94,18 +94,19 @@ async function resetGame() {
 function spawnTarget(now) {
   const type = weightedTarget(); const rect = playfield.getBoundingClientRect(); const edgeRoll = Math.random();
   const entry = edgeRoll < .72 ? (Math.random() < .5 ? 'left' : 'right') : 'top';
+  const rareLowerRoute = Math.random() < .05; const routeBottom = rareLowerRoute ? rect.height - 145 : Math.max(165, rect.height * .58);
   let x, y, exitX, exitY;
   const speed = (36 + Math.random() * 30 + Math.min(gameTime(now) / 1500, 30)) * (type.key === 'small' ? 1.28 : 1);
   if (entry === 'left' || entry === 'right') {
     x = entry === 'left' ? -type.size : rect.width + type.size;
-    y = 90 + Math.random() * Math.max(40, rect.height - 230);
+    y = 88 + Math.random() * Math.max(30, routeBottom - 150);
     exitX = entry === 'left' ? rect.width + type.size : -type.size;
     const diagonal = (Math.random() < .5 ? -1 : 1) * (rect.height * (.22 + Math.random() * .22));
-    exitY = Math.max(40, Math.min(rect.height - 70, y + diagonal));
+    exitY = Math.max(40, Math.min(routeBottom, y + diagonal));
   } else {
     x = 30 + Math.random() * Math.max(40, rect.width - 60); y = -type.size;
     exitX = Math.random() < .5 ? -type.size : rect.width + type.size;
-    exitY = 100 + Math.random() * Math.max(40, rect.height - 190);
+    exitY = 92 + Math.random() * Math.max(30, routeBottom - 150);
   }
   const distance = Math.hypot(exitX - x, exitY - y) || 1;
   const vx = ((exitX - x) / distance) * speed;
@@ -174,12 +175,14 @@ function tick(now) {
     if (gone) t.el.remove(); return !gone;
   });
   state.projectiles = state.projectiles.filter((p) => {
-    if (!p.alive) return false; const progress = Math.min(1, (now - p.startAt) / p.duration); const arc = -Math.sin(progress * Math.PI) * Math.min(170, 75 + Math.abs(p.endX - p.startX) * .16);
-    const x = p.startX + (p.endX - p.startX) * progress; const y = p.startY + (p.endY - p.startY) * progress + arc; const scale = 1.08 - .48 * Math.sin(progress * Math.PI) - .08 * progress;
+    if (!p.alive) return false; const progress = Math.min(1, (now - p.startAt) / p.duration);
+    const x = p.startX + (p.endX - p.startX) * progress; const y = p.startY + (p.endY - p.startY) * progress; const scale = 1;
     p.el.style.transform = `translate(${x - 48}px, ${y - 48}px) scale(${scale}) rotate(${progress * 480}deg)`;
-    if (progress >= 1 && p.alive) {
-      const landedOn = state.targets.find((t) => t.alive && !t.invulnerable && projectileOverlapsTarget(t, p));
+    if (progress >= .86 && p.alive) {
+      const landedOn = state.targets.find((t) => t.alive && !t.invulnerable && projectileOverlapsTarget(t, p, x, y, progress * 480, scale));
       if (landedOn) hitTarget(landedOn, p, now);
+    }
+    if (progress >= 1 && p.alive) {
       if (p.alive) { p.el.remove(); p.alive = false; if (!state.fever) state.combo = 0; }
     }
     return p.alive;
