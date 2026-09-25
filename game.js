@@ -14,10 +14,10 @@ const weapons = [
   { name: '리산성', asset: assets.projectileNew4, hit: 'risan' },
 ];
 const targetTypes = [
-  { key: 'normal', size: 86, points: 10, weight: 48 },
-  { key: 'small', size: 86, points: 30, weight: 22 },
-  { key: 'big', size: 86, points: 5, weight: 15 },
-  { key: 'trap', size: 86, points: -50, weight: 6 },
+  { key: 'normal', size: 86, points: 10, weight: 44 },
+  { key: 'small', size: 86, points: 30, weight: 20 },
+  { key: 'big', size: 86, points: 5, weight: 14 },
+  { key: 'trap', size: 86, points: -50, weight: 13 },
   { key: 'trickster', size: 86, points: 70, weight: 9 },
 ];
 const targetAssets = [
@@ -69,12 +69,15 @@ function spawnTarget(now) {
     exitX = Math.random() < .5 ? -type.size : rect.width + type.size;
     exitY = 92 + Math.random() * Math.max(30, routeBottom - 150);
   }
-  const distance = Math.hypot(exitX - x, exitY - y) || 1;
-  const vx = ((exitX - x) / distance) * speed;
-  const vy = ((exitY - y) / distance) * speed;
+  const centerX = rect.width / 2; const centerY = rect.height * .43; const radius = Math.min(rect.width * .29, rect.height * .24);
+  const angle = Math.random() * Math.PI * 2; const r = radius * Math.sqrt(Math.random());
+  const viaX = centerX + Math.cos(angle) * r; const viaY = centerY + Math.sin(angle) * r;
+  const distance = Math.hypot(viaX - x, viaY - y) || 1;
+  const vx = ((viaX - x) / distance) * speed;
+  const vy = ((viaY - y) / distance) * speed;
   const visual = random(targetAssets); const el = document.createElement('div'); const targetImage = image(visual.src, 'target-asset');
   el.className = `target ${type.key}`; el.append(targetImage); el.style.setProperty('--size', `${type.size}px`); targetLayer.append(el);
-  state.targets.push({ id: nextId++, type, el, image: targetImage, asset: visual.src, x, y, vx, vy, size: type.size, alive: true, behaviorAt: now + 430 + Math.random() * 640 });
+  state.targets.push({ id: nextId++, type, el, image: targetImage, asset: visual.src, x, y, vx, vy, size: type.size, alive: true, waypoint: { x: viaX, y: viaY, exitX, exitY, reached: false }, behaviorAt: now + 430 + Math.random() * 640 });
 }
 
 function throwObject(event) {
@@ -97,6 +100,9 @@ function spawnHeartPair(x, y) {
     heart.style.left = `${x}px`; heart.style.top = `${y}px`; projectileLayer.append(heart);
     setTimeout(() => heart.remove(), 700);
   });
+  const mini = document.createElement('div'); mini.className = 'heart-impact mini-heart'; mini.textContent = '♥';
+  mini.style.left = `${x + 24}px`; mini.style.top = `${y - 28}px`; projectileLayer.append(mini);
+  setTimeout(() => mini.remove(), 700);
 }
 
 function hitTarget(target, projectile, now) {
@@ -107,7 +113,7 @@ function hitTarget(target, projectile, now) {
     target.alive = true; target.invulnerable = true;
     state.score = Math.max(0, state.score + target.type.points);
     target.image.src = trapRunFrames[0];
-    target.fleeing = { startedAt: now, fromX: target.x, fromY: target.y, toX: playfield.clientWidth + target.size * 2, toY: -target.size * 2, duration: 1800 };
+    target.fleeing = { startedAt: now, fromX: target.x, fromY: target.y, toX: playfield.clientWidth + target.size * 2, toY: -target.size * 2, duration: 2570 };
     target.el.classList.add('fleeing'); target.el.style.zIndex = '0'; projectile.el.remove(); return;
   }
   if (projectile.weapon.hit === 'risan') {
@@ -119,7 +125,7 @@ function hitTarget(target, projectile, now) {
   state.score += target.type.points;
   if (projectile.weapon.hit === 'rock') spawnImpact(hitX, hitY);
   if (projectile.weapon.hit === 'manhole') { target.image.src = assets.manholeHitPerson; target.el.classList.add('manholed'); target.falling = true; target.vx = 0; target.vy = 200; setTimeout(() => target.el.remove(), 1800); }
-  else if (projectile.weapon.hit === 'poo') { target.el.classList.add('pooed'); target.lingerUntil = now + 330; }
+  else if (projectile.weapon.hit === 'poo') { target.el.classList.add('pooed'); target.lingerUntil = now + 660; }
   else if (projectile.weapon.hit === 'pig') { target.image.src = assets.pigHitPork; target.el.classList.add('pigged'); target.lingerUntil = now + 360; }
   else { target.el.remove(); }
 }
@@ -127,7 +133,7 @@ function hitTarget(target, projectile, now) {
 function tick(now) {
   if (!state.active || state.paused) return;
   const elapsed = gameTime(now); if (elapsed >= 90000) return finishGame();
-  const spawnGap = Math.max(430, 820 - elapsed / 190); if (now >= state.spawnAt) { spawnTarget(now); state.spawnAt = now + spawnGap; }
+  const spawnGap = Math.max(575, 1095 - elapsed / 142.5); if (now >= state.spawnAt) { spawnTarget(now); state.spawnAt = now + spawnGap; }
   const rect = playfield.getBoundingClientRect();
   state.targets = state.targets.filter((t) => {
     if (!t.alive && !t.falling && !t.fleeing && !t.lingerUntil) return false;
@@ -145,7 +151,16 @@ function tick(now) {
       if (now >= t.lingerUntil) { t.el.remove(); return false; }
       t.el.style.transform = `translate(${t.x}px, ${t.y}px) scale(1.08)`; return true;
     }
-    if (t.type.key === 'trickster' && t.alive && now >= t.behaviorAt) { t.vx = (Math.random() * 2 - 1) * 190; t.vy = (Math.random() * 2 - 1) * 170; t.behaviorAt = now + 180 + Math.random() * 340; }
+    if (t.waypoint && !t.waypoint.reached) {
+      const remain = Math.hypot(t.waypoint.x - t.x, t.waypoint.y - t.y);
+      if (remain <= Math.max(4, Math.hypot(t.vx, t.vy) / 50)) {
+        t.x = t.waypoint.x; t.y = t.waypoint.y; t.waypoint.reached = true;
+        const outDistance = Math.hypot(t.waypoint.exitX - t.x, t.waypoint.exitY - t.y) || 1;
+        const speed = Math.hypot(t.vx, t.vy);
+        t.vx = ((t.waypoint.exitX - t.x) / outDistance) * speed; t.vy = ((t.waypoint.exitY - t.y) / outDistance) * speed;
+      }
+    }
+    if (t.type.key === 'trickster' && t.alive && (!t.waypoint || t.waypoint.reached) && now >= t.behaviorAt) { t.vx = (Math.random() * 2 - 1) * 190; t.vy = (Math.random() * 2 - 1) * 170; t.behaviorAt = now + 180 + Math.random() * 340; }
     t.x += t.vx / 60; t.y += t.vy / 60; t.el.style.transform = `translate(${t.x}px, ${t.y}px) rotate(${t.type.key === 'trickster' ? Math.sin(now / 65) * 14 : 0}deg)`;
     const gone = t.x < -t.size * 2 || t.x > rect.width + t.size * 2 || t.y < -t.size * 2 || t.y > rect.height + t.size * 2;
     if (gone) t.el.remove(); return !gone;
