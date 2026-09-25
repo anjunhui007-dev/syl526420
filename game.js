@@ -221,13 +221,14 @@ function tick(now) {
   updateHud(now); state.raf = requestAnimationFrame(tick);
 }
 
-function finishGame() { state.active = false; cancelAnimationFrame(state.raf); targetLayer.replaceChildren(); projectileLayer.replaceconst RANKING_API = 'https://script.google.com/macros/s/AKfycbxGTeWf9_IKHCCghNkgwBlG36h2s5MdDtHIezJEZ-SGTKAia9IauXz551m6-kQwhhKe/exec';
+function finishGame() { state.active = false; cancelAnimationFrame(state.raf); targetLayer.replaceChildren(); projectileLayer.replaceChildren(); saveScore(state.score); $('#final-score').textContent = state.score; $('#hit-count').textContent = state.hits; showScreen('result'); }
+const RANKING_API = 'https://script.google.com/macros/s/AKfycbxGTeWf9_IKHCCghNkgwBlG36h2s5MdDtHIezJEZ-SGTKAia9IauXz551m6-kQwhhKe/exec';
 localStorage.removeItem('hit-ris-ranking');
-function playerNickname() { const saved = localStorage.getItem('hit-ris-nickname') || '익명'; return saved.includes('리산성') ? '익명' : saved; }
+function playerNickname() { const saved = localStorage.getItem('hit-ris-nickname') || '익명'; return saved === '리산성' ? '익명' : saved; }
 function setNicknameWarning(message = '') { $('#nickname-warning').textContent = message; }
 function saveNickname() {
   const value = $('#nickname-input').value.trim().replace(/\s+/g, ' ').slice(0, 12);
-  if (value.includes('리산성')) { setNicknameWarning('감히 신을 사칭하려하느냐'); return; }
+  if (value === '리산성') { setNicknameWarning('감히 신을 사칭하려하느냐'); return; }
   if (value) localStorage.setItem('hit-ris-nickname', value);
   setNicknameWarning(''); $('#nickname-input').value = playerNickname();
 }
@@ -259,9 +260,6 @@ function showRanking() {
   showScreen('ranking'); refreshSharedRanking();
   if (rankingRefreshTimer) clearInterval(rankingRefreshTimer);
   rankingRefreshTimer = setInterval(refreshSharedRanking, 3000);
-}
-nkings().slice(0, 10));
-  try { renderRankings(await fetchSharedRankings()); } catch (_) { /* offline fallback: local ranking stays visible */ }
 }
 function togglePause() { if (!state.active) return; state.paused = true; state.pauseStartedAt = performance.now(); cancelAnimationFrame(state.raf); pauseModal.classList.add('open'); pauseModal.setAttribute('aria-hidden', 'false'); }
 function resumeGame() { if (!state.paused) return; state.pausedTotal += performance.now() - state.pauseStartedAt; state.paused = false; pauseModal.classList.remove('open'); pauseModal.setAttribute('aria-hidden', 'true'); state.raf = requestAnimationFrame(tick); }
