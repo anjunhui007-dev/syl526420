@@ -21,12 +21,13 @@ const targetTypes = [
   { key: 'trickster', size: 104, points: 70, weight: 9 },
 ];
 const targetAssets = [
-  { src: assets.target1, hitScale: 1 },
-  { src: assets.target2, hitScale: 1 },
-  { src: assets.target3, hitScale: 1.42 },
-  { src: assets.target4, hitScale: 1.42 },
-  { src: assets.target7, hitScale: 1 },
+  { src: assets.target1 },
+  { src: assets.target2 },
+  { src: assets.target3 },
+  { src: assets.target4 },
+  { src: assets.target7 },
 ];
+const targetMasks = new Map();
 
 const state = { active: false, paused: false, startedAt: 0, pauseStartedAt: 0, pausedTotal: 0, score: 0, combo: 0, maxCombo: 0, hits: 0, fever: false, feverUntil: 0, lastHitAt: 0, targets: [], projectiles: [], spawnAt: 0, raf: null, loadedWeapon: null };
 let nextId = 1;
@@ -35,6 +36,31 @@ function showScreen(name) { Object.entries(screens).forEach(([key, node]) => nod
 function random(array) { return array[Math.floor(Math.random() * array.length)]; }
 function image(src, className = '') { const node = document.createElement('img'); node.src = src; node.className = className; node.alt = ''; node.draggable = false; return node; }
 function updateLoadedProjectile() { const holder = $('#loaded-projectile'); holder.replaceChildren(image(state.loadedWeapon.asset)); }
+function loadTargetMask(src) {
+  return new Promise((resolve) => {
+    const source = new Image();
+    source.onload = () => {
+      const canvas = document.createElement('canvas'); canvas.width = source.naturalWidth; canvas.height = source.naturalHeight;
+      const context = canvas.getContext('2d', { willReadFrequently: true }); context.drawImage(source, 0, 0);
+      targetMasks.set(src, { width: source.naturalWidth, height: source.naturalHeight, alpha: context.getImageData(0, 0, source.naturalWidth, source.naturalHeight).data });
+      resolve();
+    };
+    source.onerror = () => resolve();
+    source.src = src;
+  });
+}
+const targetMasksReady = Promise.all(targetAssets.map((item) => loadTargetMask(item.src)));
+function hitsTargetSilhouette(target, x, y) {
+  const mask = targetMasks.get(target.asset); if (!mask) return false;
+  const localX = x - target.x; const localY = y - target.y;
+  const scale = Math.min(target.size / mask.width, target.size / mask.height);
+  const drawnWidth = mask.width * scale; const drawnHeight = mask.height * scale;
+  const drawX = (target.size - drawnWidth) / 2; const drawY = (target.size - drawnHeight) / 2;
+  if (localX < drawX || localX >= drawX + drawnWidth || localY < drawY || localY >= drawY + drawnHeight) return false;
+  const pixelX = Math.min(mask.width - 1, Math.floor((localX - drawX) / scale));
+  const pixelY = Math.min(mask.height - 1, Math.floor((localY - drawY) / scale));
+  return mask.alpha[(pixelY * mask.width + pixelX) * 4 + 3] > 12;
+}
 function weightedTarget() {
   const allowed = state.fever ? targetTypes.filter((item) => item.key !== 'trap') : targetTypes;
   const total = allowed.reduce((sum, item) => sum + item.weight, 0);
@@ -45,7 +71,8 @@ function formatTime(milliseconds) { const sec = Math.max(0, Math.ceil(millisecon
 function gameTime(now) { return now - state.startedAt - state.pausedTotal; }
 function updateHud(now) { $('#score-value').textContent = state.score; $('#timer-value').textContent = formatTime(90000 - gameTime(now)); $('#combo-value').textContent = state.combo; }
 
-function resetGame() {
+async function resetGame() {
+  await targetMasksReady;
   cancelAnimationFrame(state.raf); targetLayer.replaceChildren(); projectileLayer.replaceChildren();
   Object.assign(state, { active: true, paused: false, startedAt: performance.now(), pauseStartedAt: 0, pausedTotal: 0, score: 0, combo: 0, maxCombo: 0, hits: 0, fever: false, feverUntil: 0, lastHitAt: 0, targets: [], projectiles: [], spawnAt: 0, loadedWeapon: random(weapons) });
   playfield.classList.remove('fever'); $('#fever-banner').classList.remove('show'); pauseModal.classList.remove('open'); pauseModal.setAttribute('aria-hidden', 'true');
@@ -73,7 +100,7 @@ function spawnTarget(now) {
   const vy = ((exitY - y) / distance) * speed;
   const visual = random(targetAssets); const el = document.createElement('div'); const targetImage = image(visual.src, 'target-asset');
   el.className = `target ${type.key}`; el.append(targetImage); el.style.setProperty('--size', `${type.size}px`); targetLayer.append(el);
-  state.targets.push({ id: nextId++, type, el, image: targetImage, x, y, vx, vy, size: type.size, hitScale: visual.hitScale, alive: true, behaviorAt: now + 430 + Math.random() * 640 });
+  state.targets.push({ id: nextId++, type, el, image: targetImage, asset: visual.src, x, y, vx, vy, size: type.size, alive: true, behaviorAt: now + 430 + Math.random() * 640 });
 }
 
 function throwObject(event) {
@@ -139,12 +166,7 @@ function tick(now) {
     const x = p.startX + (p.endX - p.startX) * progress; const y = p.startY + (p.endY - p.startY) * progress + arc; const scale = 1.08 - .48 * Math.sin(progress * Math.PI) - .08 * progress;
     p.el.style.transform = `translate(${x - 48}px, ${y - 48}px) scale(${scale}) rotate(${progress * 480}deg)`;
     if (progress >= 1 && p.alive) {
-      const landedOn = state.targets.find((t) => {
-        if (!t.alive || t.invulnerable) return false;
-        const padding = 3 + (t.size * (t.hitScale - 1)) / 2;
-        return p.endX >= t.x - padding && p.endX <= t.x + t.size + padding
-          && p.endY >= t.y - padding && p.endY <= t.y + t.size + padding;
-      });
+      const landedOn = state.targets.find((t) => t.alive && !t.invulnerable && hitsTargetSilhouette(t, p.endX, p.endY));
       if (landedOn) hitTarget(landedOn, p, now);
       if (p.alive) { p.el.remove(); p.alive = false; if (!state.fever) state.combo = 0; }
     }
