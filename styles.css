@@ -95,10 +95,10 @@ h2 { margin-bottom: 18px; font-size: 2rem; }
 .result-stats { display: flex; justify-content: space-around; margin-bottom: 8px; }
 .result-stats b { color: #fff; font-size: 1.2rem; }
 .ranking-list { display: grid; gap: 8px; margin: 0 0 22px; padding: 0; list-style-position: inside; text-align: left; }
-.ranking-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 9px; align-items: center; padding: 12px 15px; border-radius: 12px; background: #171535; font-weight: 900; }
-.ranking-list li strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ranking-list li small { color: #bdb8dd; font-size: .7rem; }
-.ranking-list li b { color: #ffdf63; white-space: nowrap; }
+.ranking-list li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(68px, .8fr) minmax(76px, auto); gap: 9px; align-items: center; padding: 12px 15px; border-radius: 12px; background: #171535; font-weight: 900; }
+.ranking-list li strong { justify-self: start; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ranking-list li small { justify-self: center; text-align: center; white-space: nowrap; color: #bdb8dd; font-size: .7rem; }
+.ranking-list li b { justify-self: end; text-align: right; color: #ffdf63; white-space: nowrap; }
 .ranking-list li::marker { color: #ffdf63; }
 .ranking-list .empty { color: #bdb8dd; text-align: center; list-style: none; }
 .modal { display: none; position: fixed; z-index: 30; inset: 0; place-items: center; background: rgba(5,5,18,.7); backdrop-filter: blur(4px); }
