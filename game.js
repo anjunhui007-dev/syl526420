@@ -17,7 +17,7 @@ const targetTypes = [
   { key: 'normal', size: 86, points: 10, weight: 44 },
   { key: 'small', size: 86, points: 10, weight: 20 },
   { key: 'big', size: 86, points: 10, weight: 14 },
-  { key: 'trap', size: 86, points: -30, weight: 13 },
+  { key: 'trap', size: 86, points: -25, weight: 13 },
   { key: 'trickster', size: 86, points: 10, weight: 9 },
 ];
 const targetAssets = [
