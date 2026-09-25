@@ -14,6 +14,11 @@ h1 span { color: #ffdc55; -webkit-text-stroke: 2px #fff; }
 .subtitle { color: #d6d2ff; font-weight: 700; }
 .home-content .subtitle { font-size: clamp(.82rem, 3vw, 1rem); letter-spacing: -.06em; white-space: nowrap; }
 .home-actions { display: grid; gap: 10px; width: min(290px, 78vw); margin: 28px auto 0; }
+.nickname-form { width: min(290px, 78vw); margin: 15px auto 0; text-align: left; }
+.nickname-form label { display: block; margin: 0 0 5px 4px; color: #d8d3ff; font-size: .77rem; font-weight: 900; }
+.nickname-form div { display: flex; gap: 7px; }
+.nickname-form input { min-width: 0; flex: 1; border: 2px solid #7770b8; border-radius: 11px; background: rgba(16,14,46,.88); color: #fff; padding: 10px 11px; font: inherit; font-size: .86rem; }
+.nickname-form button { border-radius: 11px; background: #665aad; color: #fff; padding: 0 13px; font-size: .82rem; }
 .primary-button, .secondary-button, .text-button, .icon-button { border-radius: 18px; transition: transform .12s, filter .12s; }
 .primary-button:hover, .secondary-button:hover, .text-button:hover, .icon-button:hover { filter: brightness(1.12); transform: translateY(-2px); }
 .primary-button:active, .secondary-button:active, .text-button:active, .icon-button:active { transform: translateY(1px) scale(.98); }
@@ -85,7 +90,10 @@ h2 { margin-bottom: 18px; font-size: 2rem; }
 .result-stats { display: flex; justify-content: space-around; margin-bottom: 8px; }
 .result-stats b { color: #fff; font-size: 1.2rem; }
 .ranking-list { display: grid; gap: 8px; margin: 0 0 22px; padding: 0; list-style-position: inside; text-align: left; }
-.ranking-list li { padding: 12px 15px; border-radius: 12px; background: #171535; font-weight: 900; }
+.ranking-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 9px; align-items: center; padding: 12px 15px; border-radius: 12px; background: #171535; font-weight: 900; }
+.ranking-list li strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ranking-list li small { color: #bdb8dd; font-size: .7rem; }
+.ranking-list li b { color: #ffdf63; white-space: nowrap; }
 .ranking-list li::marker { color: #ffdf63; }
 .ranking-list .empty { color: #bdb8dd; text-align: center; list-style: none; }
 .modal { display: none; position: fixed; z-index: 30; inset: 0; place-items: center; background: rgba(5,5,18,.7); backdrop-filter: blur(4px); }
