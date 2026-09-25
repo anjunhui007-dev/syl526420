@@ -17,7 +17,7 @@ h1 span { color: #ffdc55; -webkit-text-stroke: 2px #fff; }
 .nickname-form { width: min(290px, 78vw); margin: 15px auto 0; text-align: left; }
 .nickname-form label { display: block; margin: 0 0 5px 4px; color: #d8d3ff; font-size: .77rem; font-weight: 900; }
 .nickname-form div { display: flex; gap: 7px; }
-.nickname-form input { min-width: 0; flex: 1; border: 2px solid #7770b8; border-radius: 11px; background: rgba(16,14,46,.88); color: #fff; padding: 10px 11px; font: inherit; font-size: .86rem; }
+.nickname-form input { min-width: 0; flex: 1; border: 2px solid #7770b8; border-radius: 11px; background: rgba(16,14,46,.88); color: #fff; padding: 10px 11px; font: inherit; font-size: 16px; }
 .nickname-form button { border-radius: 11px; background: #665aad; color: #fff; padding: 0 13px; font-size: .82rem; }
 .about-button { display: block; margin: 8px auto 0; }
 .primary-button, .secondary-button, .text-button, .icon-button { border-radius: 18px; transition: transform .12s, filter .12s; }
@@ -110,4 +110,4 @@ h2 { margin-bottom: 18px; font-size: 2rem; }
 
 .nickname-warning { min-height: 1.2em; margin: 5px 4px 0; color: #ff9b95; font-size: .75rem; font-weight: 900; text-align: center; }
 
-.loaded-projectile.cooldown img { filter: sepia(1) saturate(9) hue-rotate(315deg) brightness(1.06) drop-shadow(0 6px 0 rgba(91,0,0,.48)); }
+.loaded-projectile.cooldown img { filter: sepia(.42) saturate(2.4) hue-rotate(315deg) brightness(1.08) drop-shadow(0 6px 0 rgba(140,36,36,.24)); }
