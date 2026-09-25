@@ -1,6 +1,6 @@
 const $ = (selector) => document.querySelector(selector);
 
-const screens = { home: $('#home-screen'), game: $('#game-screen'), result: $('#result-screen'), ranking: $('#ranking-screen') };
+const screens = { home: $('#home-screen'), game: $('#game-screen'), result: $('#result-screen'), ranking: $('#ranking-screen'), about: $('#about-screen') };
 const playfield = $('#playfield');
 const targetLayer = $('#target-layer');
 const projectileLayer = $('#projectile-layer');
@@ -15,10 +15,10 @@ const weapons = [
 ];
 const targetTypes = [
   { key: 'normal', size: 86, points: 10, weight: 44 },
-  { key: 'small', size: 86, points: 30, weight: 20 },
-  { key: 'big', size: 86, points: 5, weight: 14 },
-  { key: 'trap', size: 86, points: -50, weight: 13 },
-  { key: 'trickster', size: 86, points: 70, weight: 9 },
+  { key: 'small', size: 86, points: 10, weight: 20 },
+  { key: 'big', size: 86, points: 10, weight: 14 },
+  { key: 'trap', size: 86, points: -30, weight: 13 },
+  { key: 'trickster', size: 86, points: 10, weight: 9 },
 ];
 const targetAssets = [
   { src: assets.targetNew0 }, { src: assets.targetNew1 }, { src: assets.targetNew2 }, { src: assets.targetNew3 },
@@ -197,7 +197,7 @@ function showRanking() { const list = rankings().slice(0, 10); const target = $(
 function togglePause() { if (!state.active) return; state.paused = true; state.pauseStartedAt = performance.now(); cancelAnimationFrame(state.raf); pauseModal.classList.add('open'); pauseModal.setAttribute('aria-hidden', 'false'); }
 function resumeGame() { if (!state.paused) return; state.pausedTotal += performance.now() - state.pauseStartedAt; state.paused = false; pauseModal.classList.remove('open'); pauseModal.setAttribute('aria-hidden', 'true'); state.raf = requestAnimationFrame(tick); }
 
-$('#start-button').addEventListener('click', resetGame); $('#retry-button').addEventListener('click', resetGame); $('#pause-button').addEventListener('click', togglePause); $('#resume-button').addEventListener('click', resumeGame); $('#restart-button').addEventListener('click', resetGame); $('#exit-button').addEventListener('click', () => { state.active = false; pauseModal.classList.remove('open'); showScreen('home'); }); $('#ranking-button').addEventListener('click', showRanking); $('#result-ranking-button').addEventListener('click', showRanking); $('#ranking-home-button').addEventListener('click', () => showScreen('home')); $('#result-home-button').addEventListener('click', () => showScreen('home')); playfield.addEventListener('pointerdown', throwObject);
+$('#start-button').addEventListener('click', resetGame); $('#retry-button').addEventListener('click', resetGame); $('#pause-button').addEventListener('click', togglePause); $('#resume-button').addEventListener('click', resumeGame); $('#restart-button').addEventListener('click', resetGame); $('#exit-button').addEventListener('click', () => { state.active = false; pauseModal.classList.remove('open'); showScreen('home'); }); $('#ranking-button').addEventListener('click', showRanking); $('#result-ranking-button').addEventListener('click', showRanking); $('#ranking-home-button').addEventListener('click', () => showScreen('home')); $('#result-home-button').addEventListener('click', () => showScreen('home')); $('#about-button').addEventListener('click', () => showScreen('about')); $('#about-home-button').addEventListener('click', () => showScreen('home')); playfield.addEventListener('pointerdown', throwObject);
 $('#nickname-save-button').addEventListener('click', saveNickname); $('#nickname-input').addEventListener('keydown', (event) => { if (event.key === 'Enter') saveNickname(); }); $('#nickname-input').value = playerNickname();
 document.querySelectorAll('[data-home-asset]').forEach((node) => node.append(image(assets[node.dataset.homeAsset])));
 const gameAmbient = document.querySelector('#game-screen .ambient-text-layer');
