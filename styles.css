@@ -54,7 +54,8 @@ h1 span { color: #ffdc55; -webkit-text-stroke: 2px #fff; }
 @keyframes scrollLeft { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @keyframes scrollRight { from { transform: translateX(-50%); } to { transform: translateX(0); } }
 .target { position: absolute; display: grid; place-items: center; width: var(--size); height: var(--size); filter: drop-shadow(0 7px 0 rgba(0,0,0,.25)); will-change: transform; }
-.target-asset { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+.target-asset { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+.hitbox-overlay { opacity: .34; filter: brightness(0) saturate(100%) invert(81%) sepia(97%) saturate(661%) hue-rotate(61deg) brightness(105%) contrast(103%); mix-blend-mode: screen; }
 .target.trap { filter: drop-shadow(0 0 10px #ff445c) drop-shadow(0 7px 0 rgba(0,0,0,.25)); animation: trapPulse .8s infinite alternate; }
 .target.trickster .target-asset { animation: targetWobble .22s steps(2, end) infinite; }
 .target::after { content: ''; position: absolute; inset: 8%; border-radius: 50%; pointer-events: none; }
