@@ -257,20 +257,32 @@ function renderRankings(list) {
   list.forEach((record) => { const item = document.createElement('li'); const name = document.createElement('strong'); name.textContent = record.nickname || '익명'; const date = document.createElement('small'); date.textContent = record.date; const score = document.createElement('b'); score.textContent = record.score.toLocaleString() + '점'; item.append(name, date, score); });
 }
 function renderRankingLoadError() { const target = $('#ranking-list'); target.replaceChildren(); const item = document.createElement('li'); item.className = 'empty'; item.textContent = '스프레드시트 랭킹을 불러오지 못했습니다.'; target.append(item); }
-function rankingRequest(method = 'GET', record = null) {
+function rankingRequestWithXhr(method = 'GET', record = null) {
   return new Promise((resolve, reject) => {
     const request = new XMLHttpRequest();
+    request.timeout = 7000;
     request.open(method, RANKING_API + (method === 'GET' ? '?_=' + Date.now() : ''), true);
     if (method === 'POST') request.setRequestHeader('Content-Type', 'text/plain;charset=utf-8');
     request.onload = () => {
       if (request.status < 200 || request.status >= 300) return reject(new Error('ranking request failed'));
       try { resolve(JSON.parse(request.responseText)); } catch (_) { reject(new Error('ranking response was not JSON')); }
     };
-    request.onerror = () => reject(new Error('ranking request failed'));
+    request.onerror = request.ontimeout = () => reject(new Error('ranking request failed'));
     request.send(record ? JSON.stringify(record) : null);
   });
 }
+async function rankingRequest(method = 'GET', record = null) {
+  const url = RANKING_API + (method === 'GET' ? '?_=' + Date.now() : '');
+  if (typeof fetch === 'function') {
+    try {
+      const response = await fetch(url, method === 'POST' ? { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(record) } : { cache: 'no-store' });
+      if (response.ok) return response.json();
+    } catch (_) { /* use XHR fallback */ }
+  }
+  return rankingRequestWithXhr(method, record);
+}
 async function fetchSharedRankings() { return normalizeRankings(await rankingRequest()); }
+function renderRankingLoading() { const target = $('#ranking-list'); target.replaceChildren(); const item = document.createElement('li'); item.className = 'empty'; item.textContent = '랭킹 불러오는 중…'; target.append(item); }
 async function refreshSharedRanking() {
   try { renderRankings(await fetchSharedRankings()); } catch (_) { renderRankingLoadError(); }
 }
@@ -279,7 +291,7 @@ function saveScore(score) {
   rankingRequest('POST', record).then(() => { if (screens.ranking.classList.contains('active')) refreshSharedRanking(); }).catch(() => {});
 }
 function showRanking() {
-  showScreen('ranking'); refreshSharedRanking();
+  showScreen('ranking'); renderRankingLoading(); refreshSharedRanking();
   if (rankingRefreshTimer) clearInterval(rankingRefreshTimer);
   rankingRefreshTimer = setInterval(refreshSharedRanking, 3000);
 }
