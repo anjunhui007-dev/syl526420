@@ -177,7 +177,19 @@ function tick(now) {
       const direction = Math.atan2(t.vy, t.vx) + turn;
       t.vx = Math.cos(direction) * speed; t.vy = Math.sin(direction) * speed; t.behaviorAt = now + 300 + Math.random() * 520;
     }
-    t.x += t.vx / 60; t.y += t.vy / 60;
+    let avoidX = 0; let avoidY = 0;
+    state.targets.forEach((other) => {
+      if (other === t || !other.alive || other.fleeing || other.falling || other.lingerUntil) return;
+      const dx = (t.x + t.size / 2) - (other.x + other.size / 2);
+      const dy = (t.y + t.size / 2) - (other.y + other.size / 2);
+      const distance = Math.hypot(dx, dy) || 1;
+      const personalSpace = (t.size + other.size) * .72;
+      if (distance >= personalSpace) return;
+      const push = Math.min(2.6, (1 - distance / personalSpace) * 2.6);
+      avoidX += (dx / distance) * push;
+      avoidY += (dy / distance) * push;
+    });
+    t.x += t.vx / 60 + avoidX; t.y += t.vy / 60 + avoidY;
     const wobbleX = Math.sin(now / 92 + t.id * 1.7) * 2.2; const wobbleY = Math.cos(now / 118 + t.id * 1.3) * 2.6;
     t.el.style.transform = `translate(${t.x + wobbleX}px, ${t.y + wobbleY}px) rotate(${t.type.key === 'trickster' ? Math.sin(now / 65) * 14 : Math.sin(now / 175 + t.id) * 2.5}deg)`;
     const gone = t.x < -t.size * 2 || t.x > rect.width + t.size * 2 || t.y < -t.size * 2 || t.y > rect.height + t.size * 2;
