@@ -69,6 +69,7 @@ h1 span { color: #ffdc55; -webkit-text-stroke: 2px #fff; }
 @keyframes impact { to { transform: scale(5); opacity: 0; } }
 .heart-impact { position: absolute; z-index: 4; color: rgba(255,91,177,.66); font-size: 72px; line-height: 1; transform: translate(-50%, -50%); text-shadow: 0 0 15px rgba(255,110,190,.7); animation: heartImpact .62s ease-out forwards; }
 .heart-impact.projectile-heart { animation-delay: .04s; filter: hue-rotate(17deg); }
+.heart-impact.mini-heart { font-size: 15px; animation-delay: .08s; }
 @keyframes heartImpact { to { transform: translate(-50%, -50%) scale(.45) rotate(18deg); opacity: 0; } }
 .loaded-projectile { z-index: 4; bottom: max(7px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); }
 .result-screen, .ranking-screen { place-items: center; padding: 20px; }
