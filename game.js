@@ -224,13 +224,21 @@ function tick(now) {
 function finishGame() { state.active = false; cancelAnimationFrame(state.raf); targetLayer.replaceChildren(); projectileLayer.replaceChildren(); saveScore(state.score); $('#final-score').textContent = state.score; $('#hit-count').textContent = state.hits; showScreen('result'); }
 const RANKING_API = 'https://script.google.com/macros/s/AKfycbxGTeWf9_IKHCCghNkgwBlG36h2s5MdDtHIezJEZ-SGTKAia9IauXz551m6-kQwhhKe/exec';
 localStorage.removeItem('hit-ris-ranking');
-function playerNickname() { const saved = localStorage.getItem('hit-ris-nickname') || '익명'; return saved === '리산성' ? '익명' : saved; }
+function playerNickname() { return localStorage.getItem('hit-ris-nickname') || '익명'; }
 function setNicknameWarning(message = '') { $('#nickname-warning').textContent = message; }
 function saveNickname() {
   const value = $('#nickname-input').value.trim().replace(/\s+/g, ' ').slice(0, 12);
   if (value === '리산성') { setNicknameWarning('감히 신을 사칭하려하느냐'); return; }
   if (value) localStorage.setItem('hit-ris-nickname', value);
   setNicknameWarning(''); $('#nickname-input').value = playerNickname();
+}
+function startGameFromHome() {
+  const input = $('#nickname-input'); const value = input.value.trim().replace(/\s+/g, ' ').slice(0, 12);
+  if (value === '리산성') {
+    alert('고등부 리더형에 처하겠다');
+    localStorage.removeItem('hit-ris-nickname'); input.value = ''; setNicknameWarning('닉네임을 바꾸고 다시 작성해라.'); input.focus(); return;
+  }
+  resetGame();
 }
 function normalizeRankings(data) {
   const list = Array.isArray(data) ? data : (data.rankings || data.records || data.data || []);
@@ -264,7 +272,7 @@ function showRanking() {
 function togglePause() { if (!state.active) return; state.paused = true; state.pauseStartedAt = performance.now(); cancelAnimationFrame(state.raf); pauseModal.classList.add('open'); pauseModal.setAttribute('aria-hidden', 'false'); }
 function resumeGame() { if (!state.paused) return; state.pausedTotal += performance.now() - state.pauseStartedAt; state.paused = false; pauseModal.classList.remove('open'); pauseModal.setAttribute('aria-hidden', 'true'); state.raf = requestAnimationFrame(tick); }
 
-$('#start-button').addEventListener('click', resetGame); $('#retry-button').addEventListener('click', resetGame); $('#pause-button').addEventListener('click', togglePause); $('#resume-button').addEventListener('click', resumeGame); $('#restart-button').addEventListener('click', resetGame); $('#exit-button').addEventListener('click', () => { state.active = false; pauseModal.classList.remove('open'); showScreen('home'); }); $('#ranking-button').addEventListener('click', showRanking); $('#result-ranking-button').addEventListener('click', showRanking); $('#ranking-home-button').addEventListener('click', () => showScreen('home')); $('#result-home-button').addEventListener('click', () => showScreen('home')); $('#about-button').addEventListener('click', () => showScreen('about')); $('#about-home-button').addEventListener('click', () => showScreen('home')); playfield.addEventListener('pointerdown', throwObject);
+$('#start-button').addEventListener('click', startGameFromHome); $('#retry-button').addEventListener('click', resetGame); $('#pause-button').addEventListener('click', togglePause); $('#resume-button').addEventListener('click', resumeGame); $('#restart-button').addEventListener('click', resetGame); $('#exit-button').addEventListener('click', () => { state.active = false; pauseModal.classList.remove('open'); showScreen('home'); }); $('#ranking-button').addEventListener('click', showRanking); $('#result-ranking-button').addEventListener('click', showRanking); $('#ranking-home-button').addEventListener('click', () => showScreen('home')); $('#result-home-button').addEventListener('click', () => showScreen('home')); $('#about-button').addEventListener('click', () => showScreen('about')); $('#about-home-button').addEventListener('click', () => showScreen('home')); playfield.addEventListener('pointerdown', throwObject);
 $('#nickname-save-button').addEventListener('click', saveNickname); $('#nickname-input').addEventListener('keydown', (event) => { if (event.key === 'Enter') saveNickname(); }); $('#nickname-input').value = playerNickname();
 document.querySelectorAll('[data-home-asset]').forEach((node) => node.append(image(assets[node.dataset.homeAsset])));
 const gameAmbient = document.querySelector('#game-screen .ambient-text-layer');
