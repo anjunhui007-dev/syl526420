@@ -25,7 +25,7 @@ const targetAssets = [
   { src: assets.targetNew4 }, { src: assets.targetNew5 }, { src: assets.targetNew6 }, { src: assets.targetNew7 },
 ];
 const trapRunFrames = [assets.trapRun0, assets.trapRun1, assets.trapRun2];
-const state = { active: false, paused: false, startedAt: 0, pauseStartedAt: 0, pausedTotal: 0, score: 0, hits: 0, targets: [], projectiles: [], spawnAt: 0, raf: null, loadedWeapon: null };
+const state = { active: false, paused: false, startedAt: 0, pauseStartedAt: 0, pausedTotal: 0, score: 0, hits: 0, targets: [], projectiles: [], spawnAt: 0, throwReadyAt: 0, raf: null, loadedWeapon: null };
 let nextId = 1;
 
 function showScreen(name) { Object.entries(screens).forEach(([key, node]) => node.classList.toggle('active', key === name)); }
@@ -51,7 +51,7 @@ function updateHud(now) { $('#score-value').textContent = state.score; $('#timer
 
 function resetGame() {
   cancelAnimationFrame(state.raf); targetLayer.replaceChildren(); projectileLayer.replaceChildren();
-  Object.assign(state, { active: true, paused: false, startedAt: performance.now(), pauseStartedAt: 0, pausedTotal: 0, score: 0, hits: 0, targets: [], projectiles: [], spawnAt: 0, loadedWeapon: random(weapons) });
+  Object.assign(state, { active: true, paused: false, startedAt: performance.now(), pauseStartedAt: 0, pausedTotal: 0, score: 0, hits: 0, targets: [], projectiles: [], spawnAt: 0, throwReadyAt: 0, loadedWeapon: random(weapons) });
   pauseModal.classList.remove('open'); pauseModal.setAttribute('aria-hidden', 'true');
   updateLoadedProjectile(); showScreen('game'); state.raf = requestAnimationFrame(tick);
 }
@@ -97,6 +97,8 @@ function spawnTarget(now) {
 
 function throwObject(event) {
   if (!state.active || state.paused || event.target.closest('button')) return;
+  const now = performance.now(); if (now < state.throwReadyAt) return;
+  state.throwReadyAt = now + 500;
   const rect = playfield.getBoundingClientRect(); const weapon = state.loadedWeapon;
   const endX = event.clientX - rect.left; const endY = event.clientY - rect.top; const startX = rect.width / 2; const startY = rect.height - 35;
   const el = document.createElement('div'); el.className = 'projectile'; el.append(image(weapon.asset)); projectileLayer.append(el);
@@ -129,6 +131,7 @@ function hitTarget(target, projectile, now) {
   if (target.type.key === 'trap') {
     target.alive = true; target.invulnerable = true;
     state.score = Math.max(0, state.score + target.type.points * scoreMultiplier(now));
+    state.throwReadyAt = Math.max(state.throwReadyAt, now + 1000);
     target.image.src = trapRunFrames[0];
     target.fleeing = { startedAt: now, fromX: target.x, fromY: target.y, toX: playfield.clientWidth + target.size * 2, toY: -target.size * 2, duration: 2570 };
     target.el.classList.add('fleeing'); target.el.style.zIndex = '0'; projectile.el.remove(); return;
