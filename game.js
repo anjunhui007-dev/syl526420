@@ -98,9 +98,9 @@ function spawnTarget(now) {
   const distance = Math.hypot(exitX - x, exitY - y) || 1;
   const vx = ((exitX - x) / distance) * speed;
   const vy = ((exitY - y) / distance) * speed;
-  const visual = random(targetAssets); const el = document.createElement('div'); const targetImage = image(visual.src, 'target-asset');
-  el.className = `target ${type.key}`; el.append(targetImage); el.style.setProperty('--size', `${type.size}px`); targetLayer.append(el);
-  state.targets.push({ id: nextId++, type, el, image: targetImage, asset: visual.src, x, y, vx, vy, size: type.size, alive: true, behaviorAt: now + 430 + Math.random() * 640 });
+  const visual = random(targetAssets); const el = document.createElement('div'); const targetImage = image(visual.src, 'target-asset'); const hitboxImage = image(visual.src, 'target-asset hitbox-overlay');
+  el.className = `target ${type.key}`; el.append(targetImage, hitboxImage); el.style.setProperty('--size', `${type.size}px`); targetLayer.append(el);
+  state.targets.push({ id: nextId++, type, el, image: targetImage, hitboxImage, asset: visual.src, x, y, vx, vy, size: type.size, alive: true, behaviorAt: now + 430 + Math.random() * 640 });
 }
 
 function throwObject(event) {
@@ -125,9 +125,9 @@ function hitTarget(target, projectile, now) {
   const comboMultiplier = state.fever ? 2 : (state.combo >= 10 ? 1.5 : state.combo >= 3 ? 1.2 : 1);
   state.score += Math.round(target.type.points * comboMultiplier);
   const impact = document.createElement('div'); impact.className = 'impact'; impact.style.left = `${target.x}px`; impact.style.top = `${target.y}px`; projectileLayer.append(impact); setTimeout(() => impact.remove(), 320);
-  if (projectile.weapon.hit === 'manhole') { target.image.src = assets.targetManhole; target.el.classList.add('manholed'); target.falling = true; target.vx = 0; target.vy = 650; setTimeout(() => target.el.remove(), 650); }
+  if (projectile.weapon.hit === 'manhole') { target.image.src = assets.targetManhole; target.hitboxImage.src = assets.targetManhole; target.el.classList.add('manholed'); target.falling = true; target.vx = 0; target.vy = 650; setTimeout(() => target.el.remove(), 650); }
   else if (projectile.weapon.hit === 'poo') { target.el.classList.add('pooed'); target.lingerUntil = now + 330; }
-  else if (projectile.weapon.hit === 'pig') { target.image.src = assets.targetHitPig; target.el.classList.add('pigged'); target.lingerUntil = now + 360; }
+  else if (projectile.weapon.hit === 'pig') { target.image.src = assets.targetHitPig; target.hitboxImage.src = assets.targetHitPig; target.el.classList.add('pigged'); target.lingerUntil = now + 360; }
   else { target.el.remove(); }
 }
 
