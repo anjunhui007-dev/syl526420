@@ -223,8 +223,14 @@ function tick(now) {
 
 function finishGame() { state.active = false; cancelAnimationFrame(state.raf); targetLayer.replaceChildren(); projectileLayer.replaceconst RANKING_API = 'https://script.google.com/macros/s/AKfycbxGTeWf9_IKHCCghNkgwBlG36h2s5MdDtHIezJEZ-SGTKAia9IauXz551m6-kQwhhKe/exec';
 localStorage.removeItem('hit-ris-ranking');
-function playerNickname() { return localStorage.getItem('hit-ris-nickname') || '익명'; }
-function saveNickname() { const value = $('#nickname-input').value.trim().replace(/\s+/g, ' ').slice(0, 12); if (value) localStorage.setItem('hit-ris-nickname', value); $('#nickname-input').value = playerNickname(); }
+function playerNickname() { const saved = localStorage.getItem('hit-ris-nickname') || '익명'; return saved.includes('리산성') ? '익명' : saved; }
+function setNicknameWarning(message = '') { $('#nickname-warning').textContent = message; }
+function saveNickname() {
+  const value = $('#nickname-input').value.trim().replace(/\s+/g, ' ').slice(0, 12);
+  if (value.includes('리산성')) { setNicknameWarning('감히 신을 사칭하려하느냐'); return; }
+  if (value) localStorage.setItem('hit-ris-nickname', value);
+  setNicknameWarning(''); $('#nickname-input').value = playerNickname();
+}
 function normalizeRankings(data) {
   const list = Array.isArray(data) ? data : (data.rankings || data.records || data.data || []);
   return list.map((record) => ({ nickname: String(record.nickname || record.name || '익명').slice(0, 12), date: String(record.date || ''), score: Number(record.score) || 0 }))
