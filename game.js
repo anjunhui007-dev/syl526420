@@ -311,7 +311,7 @@ function fetchSheetRankingsJsonp() {
   });
 }
 async function fetchSharedRankings() { return normalizeRankings(await fetchSheetRankingsJsonp()); }
-function renderRankingLoading() { const target = $('#ranking-list'); target.replaceChildren(); const item = document.createElement('li'); item.className = 'empty'; item.textContent = '랭킹 불러오는 중…'; target.append(item); }
+function renderRankingLoading() { const target = $('#ranking-list'); target.replaceChildren(); const item = document.createElement('li'); item.className = 'empty'; item.style.cssText = 'display:block !important;width:100%;min-width:0;white-space:nowrap;text-align:center;'; item.textContent = '랭킹 불러오는 중…'; target.append(item); }
 async function refreshSharedRanking() {
   try { renderRankings(await fetchSharedRankings()); } catch (_) { renderRankingLoadError(); }
 }
