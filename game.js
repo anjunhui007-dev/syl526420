@@ -254,7 +254,14 @@ function normalizeRankings(data) {
 function renderRankings(list) {
   const target = $('#ranking-list'); target.replaceChildren();
   if (!list.length) { const empty = document.createElement('li'); empty.className = 'empty'; empty.textContent = '아직 기록이 없습니다.'; target.append(empty); return; }
-  list.forEach((record) => { const item = document.createElement('li'); const name = document.createElement('strong'); name.textContent = record.nickname || '익명'; const date = document.createElement('small'); date.textContent = record.date; const score = document.createElement('b'); score.textContent = record.score.toLocaleString() + '점'; item.append(name, date, score); target.append(item); });
+  list.forEach((record, index) => {
+    const item = document.createElement('li');
+    const rank = document.createElement('span'); rank.className = 'rank-badge'; rank.textContent = String(index + 1);
+    const name = document.createElement('strong'); name.textContent = record.nickname || '익명';
+    const date = document.createElement('small'); date.textContent = record.date;
+    const score = document.createElement('b'); score.textContent = record.score.toLocaleString() + '점';
+    item.append(rank, name, date, score); target.append(item);
+  });
 }
 function renderRankingLoadError() { const target = $('#ranking-list'); target.replaceChildren(); const item = document.createElement('li'); item.className = 'empty'; item.textContent = '스프레드시트 랭킹을 불러오지 못했습니다.'; target.append(item); }
 function rankingRequestWithXhr(method = 'GET', record = null) {
